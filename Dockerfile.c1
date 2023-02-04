@@ -1,0 +1,11 @@
+FROM nvcr.io/nvidia/pytorch:22.12-py3
+
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
+
+COPY GenerativeModels ./GenerativeModels/
+RUN cd GenerativeModels \
+  && pip install . \
+  && cd ..
+
+RUN python3 -c "import lpips;lpips.LPIPS(net='squeeze')"
