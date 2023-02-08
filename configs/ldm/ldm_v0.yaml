@@ -1,0 +1,17 @@
+ldm:
+  base_lr: 0.000025
+  params:
+    spatial_dims: 2
+    in_channels: 4
+    out_channels: 4
+    num_res_blocks: 2
+    num_channels: [256, 512, 768, 1024]
+    attention_levels: [False, True, True, True]
+    with_conditioning: True
+    cross_attention_dim: 2
+    num_head_channels: 256
+  scheduler:
+    beta_schedule: "scaled_linear"
+    num_train_timesteps: 1000
+    beta_start: 0.0015
+    beta_end: 0.0205

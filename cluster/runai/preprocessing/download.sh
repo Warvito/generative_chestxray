@@ -1,0 +1,12 @@
+runai submit \
+  --name mimic-download \
+  --image aicregistry:5000/wds20:mimic_download \
+  --backoff-limit 0 \
+  --gpu 0 \
+  --cpu 8 \
+  --large-shm \
+  --run-as-user \
+  --host-ipc \
+  --project wds20 \
+  --volume /nfs/home/wds20/datasets/MIMIC-CXR_v2.0.0/:/data/ \
+  --command -- wget -r -N -c -np --directory-prefix=/data/ --user warvito --password=SECRET https://physionet.org/files/mimic-cxr/2.0.0/
