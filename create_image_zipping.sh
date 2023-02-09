@@ -6,7 +6,7 @@
 set -ex
 TAG=mimic_zipping
 
-docker build --network=host --tag "aicregistry:5000/${USER}:${TAG}" -f Dockerfile.download . \
+docker build --network=host --tag "aicregistry:5000/${USER}:${TAG}" -f Dockerfile.zipping . \
   --build-arg USER_ID=$(id -u) \
   --build-arg GROUP_ID=$(id -g) \
   --build-arg USER=${USER}
