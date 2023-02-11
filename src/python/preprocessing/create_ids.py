@@ -13,8 +13,10 @@ data_list = []
 for index, row in metadata_df.iterrows():
     data_list.append(
         {
-            "image": f"/data/rawdata/files/p{str(int(row['subject_id']))[:2]}/p{str(int(row['subject_id']))}/s{int(row['study_id'])}/{row['dicom_id']}.jpg",
-            "report": f"/data/rawdata/files/p{str(int(row['subject_id']))[:2]}/p{str(int(row['subject_id']))}/s{int(row['study_id'])}.txt",
+            "image": f"/data/rawdata/files/p{str(int(row['subject_id']))[:2]}/p{str(int(row['subject_id']))}/"
+            f"s{int(row['study_id'])}/{row['dicom_id']}.jpg",
+            "report": f"/data/rawdata/files/p{str(int(row['subject_id']))[:2]}/p{str(int(row['subject_id']))}/"
+            f"s{int(row['study_id'])}.txt",
         }
     )
 
