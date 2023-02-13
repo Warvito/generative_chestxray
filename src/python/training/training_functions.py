@@ -4,7 +4,6 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from generative.losses.adversarial_loss import PatchAdversarialLoss
 from pynvml.smi import nvidia_smi
 from tensorboardX import SummaryWriter
 from torch.cuda.amp import GradScaler, autocast
@@ -120,7 +119,6 @@ def train_aekl(
             if val_loss <= best_loss:
                 print(f"New best val loss {val_loss}")
                 best_loss = val_loss
-                torch.save(raw_model.state_dict(), str(run_dir / "best_model.pth"))
 
     print(f"Training finished!")
     print(f"Saving final model...")
@@ -151,8 +149,6 @@ def train_epoch_aekl(
     model.train()
     discriminator.train()
 
-    adv_loss = PatchAdversarialLoss(criterion="least_squares")
-
     pbar = tqdm(enumerate(loader), total=len(loader))
     for step, x in pbar:
         images = x["image"].to(device)
@@ -168,7 +164,8 @@ def train_epoch_aekl(
             kl_loss = torch.sum(kl_loss) / kl_loss.shape[0]
 
             logits_fake = discriminator(reconstruction.contiguous().float())[-1]
-            generator_loss = adv_loss(logits_fake, target_is_real=True, for_discriminator=False)
+            real_label = torch.ones_like(logits_fake, device=logits_fake.device)
+            generator_loss = F.mse_loss(logits_fake, real_label)
 
             loss = l1_loss + kl_weight * kl_loss + perceptual_weight * p_loss + adv_weight * generator_loss
 
@@ -197,9 +194,11 @@ def train_epoch_aekl(
 
         with autocast(enabled=True, dtype=dtype):
             logits_fake = discriminator(reconstruction.contiguous().detach())[-1]
-            loss_d_fake = adv_loss(logits_fake, target_is_real=False, for_discriminator=True)
+            fake_label = torch.zeros_like(logits_fake, device=logits_fake.device)
+            loss_d_fake = F.mse_loss(logits_fake, fake_label)
             logits_real = discriminator(images.contiguous().detach())[-1]
-            loss_d_real = adv_loss(logits_real, target_is_real=True, for_discriminator=True)
+            real_label = torch.ones_like(logits_real, device=logits_real.device)
+            loss_d_real = F.mse_loss(logits_real, real_label)
             discriminator_loss = (loss_d_fake + loss_d_real) * 0.5
 
             d_loss = adv_weight * discriminator_loss
@@ -249,7 +248,6 @@ def eval_aekl(
     model.eval()
     discriminator.eval()
 
-    adv_loss = PatchAdversarialLoss(criterion="least_squares")
     total_losses = OrderedDict()
     for x in loader:
         images = x["image"].to(device)
@@ -262,13 +260,16 @@ def eval_aekl(
             kl_loss = 0.5 * torch.sum(z_mu.pow(2) + z_sigma.pow(2) - torch.log(z_sigma.pow(2)) - 1, dim=[1, 2, 3])
             kl_loss = torch.sum(kl_loss) / kl_loss.shape[0]
             logits_fake = discriminator(reconstruction.contiguous().float())[-1]
-            generator_loss = adv_loss(logits_fake, target_is_real=True, for_discriminator=False)
+            real_label = torch.ones_like(logits_fake, device=logits_fake.device)
+            generator_loss = F.mse_loss(logits_fake, real_label)
 
             # DISCRIMINATOR
             logits_fake = discriminator(reconstruction.contiguous().detach())[-1]
-            loss_d_fake = adv_loss(logits_fake, target_is_real=False, for_discriminator=True)
+            fake_label = torch.zeros_like(logits_fake, device=logits_fake.device)
+            loss_d_fake = F.mse_loss(logits_fake, fake_label)
             logits_real = discriminator(images.contiguous().detach())[-1]
-            loss_d_real = adv_loss(logits_real, target_is_real=True, for_discriminator=True)
+            real_label = torch.ones_like(logits_real, device=logits_real.device)
+            loss_d_real = F.mse_loss(logits_real, real_label)
             discriminator_loss = (loss_d_fake + loss_d_real) * 0.5
 
             loss = l1_loss + kl_weight * kl_loss + perceptual_weight * p_loss + adv_weight * generator_loss
@@ -311,7 +312,7 @@ def eval_aekl(
 # ----------------------------------------------------------------------------------------------------------------------
 # Latent Diffusion Model Unconditioned
 # ----------------------------------------------------------------------------------------------------------------------
-def train_ldm_conditioned(
+def train_ldm(
     model: nn.Module,
     stage1: nn.Module,
     scheduler: nn.Module,
@@ -330,7 +331,7 @@ def train_ldm_conditioned(
     scaler = GradScaler()
     raw_model = model.module if hasattr(model, "module") else model
 
-    val_loss = eval_ldm_conditioned(
+    val_loss = eval_ldm(
         model=model,
         stage1=stage1,
         scheduler=scheduler,
@@ -343,7 +344,7 @@ def train_ldm_conditioned(
     print(f"epoch {start_epoch} val loss: {val_loss:.4f}")
 
     for epoch in range(start_epoch, n_epochs):
-        train_epoch_ldm_conditioned(
+        train_epoch_ldm(
             model=model,
             stage1=stage1,
             scheduler=scheduler,
@@ -356,7 +357,7 @@ def train_ldm_conditioned(
         )
 
         if (epoch + 1) % eval_freq == 0:
-            val_loss = eval_ldm_conditioned(
+            val_loss = eval_ldm(
                 model=model,
                 stage1=stage1,
                 scheduler=scheduler,
@@ -390,7 +391,7 @@ def train_ldm_conditioned(
     return val_loss
 
 
-def train_epoch_ldm_conditioned(
+def train_epoch_ldm(
     model: nn.Module,
     stage1: nn.Module,
     scheduler: nn.Module,
@@ -434,7 +435,7 @@ def train_epoch_ldm_conditioned(
 
 
 @torch.no_grad()
-def eval_ldm_conditioned(
+def eval_ldm(
     model: nn.Module,
     stage1: nn.Module,
     scheduler: nn.Module,

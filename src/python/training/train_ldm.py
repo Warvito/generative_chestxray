@@ -12,7 +12,7 @@ from monai.config import print_config
 from monai.utils import set_determinism
 from omegaconf import OmegaConf
 from tensorboardX import SummaryWriter
-from training_functions import train_ldm_conditioned
+from training_functions import train_ldm
 from util import get_dataloader, log_mlflow
 
 warnings.filterwarnings("ignore")
@@ -123,7 +123,7 @@ def main(args):
 
     # Train model
     print(f"Starting Training")
-    val_loss = train_ldm_conditioned(
+    val_loss = train_ldm(
         model=diffusion,
         stage1=stage1,
         scheduler=scheduler,

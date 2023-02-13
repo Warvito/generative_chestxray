@@ -30,7 +30,8 @@ def get_datalist(
     for index, row in df.iterrows():
         data_dicts.append(
             {
-                "image": f"{row['path']}",
+                "image": f"{row['image']}",
+                "report": f"{row['report']}",
             }
         )
 
@@ -43,7 +44,6 @@ def get_dataloader(
     batch_size: int,
     training_ids: str,
     validation_ids: str,
-    drop_last: bool = False,
     num_workers: int = 8,
     model_type: str = "autoencoder",
 ):
@@ -52,8 +52,9 @@ def get_dataloader(
         [
             transforms.LoadImaged(keys=["image"]),
             transforms.EnsureChannelFirstd(keys=["image"]),
-            transforms.ScaleIntensityRanged(keys=["image"], a_min=-1024, a_max=1024, b_min=0.0, b_max=1.0, clip=True),
-            transforms.SpatialCropd(keys=["image"], roi_start=[0, 0, 0], roi_end=[160, 160, 144]),
+            transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),
+            transforms.ScaleIntensityRanged(keys=["image"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0, clip=True),
+            transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
             transforms.ToTensord(keys=["image"]),
         ]
     )
@@ -62,22 +63,11 @@ def get_dataloader(
             [
                 transforms.LoadImaged(keys=["image"]),
                 transforms.EnsureChannelFirstd(keys=["image"]),
+                transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),
                 transforms.ScaleIntensityRanged(
-                    keys=["image"], a_min=-1024, a_max=1024, b_min=0.0, b_max=1.0, clip=True
+                    keys=["image"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0, clip=True
                 ),
-                transforms.SpatialCropd(keys=["image"], roi_start=[0, 0, 0], roi_end=[160, 160, 144]),
-                transforms.RandAffined(
-                    keys=["image"],
-                    rotate_range=[(-np.pi / 18, np.pi / 18), (-np.pi / 18, np.pi / 18), (-np.pi / 18, np.pi / 18)],
-                    translate_range=[(-2, 2), (-2, 2), (-2, 2)],
-                    scale_range=(-0.02, 0.02),
-                    spatial_size=[160, 160, 144],
-                    prob=0.2,
-                ),
-                transforms.RandShiftIntensityd(keys=["image"], offsets=0.05, prob=0.2),
-                transforms.RandAdjustContrastd(keys=["image"], gamma=(0.97, 1.03), prob=0.2),
-                transforms.ThresholdIntensityd(keys=["image"], threshold=1, above=False, cval=1.0),
-                transforms.ThresholdIntensityd(keys=["image"], threshold=0, above=True, cval=0),
+                transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
                 transforms.ToTensord(keys=["image"]),
             ]
         )
@@ -86,22 +76,11 @@ def get_dataloader(
             [
                 transforms.LoadImaged(keys=["image"]),
                 transforms.EnsureChannelFirstd(keys=["image"]),
+                transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),
                 transforms.ScaleIntensityRanged(
-                    keys=["image"], a_min=-1024, a_max=1024, b_min=0.0, b_max=1.0, clip=True
+                    keys=["image"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0, clip=True
                 ),
-                transforms.SpatialCropd(keys=["image"], roi_start=[0, 0, 0], roi_end=[160, 160, 144]),
-                transforms.RandAffined(
-                    keys=["image"],
-                    rotate_range=[(-np.pi / 36, np.pi / 36), (-np.pi / 36, np.pi / 36), (-np.pi / 36, np.pi / 36)],
-                    translate_range=[(-1, 1), (-1, 1), (-1, 1)],
-                    scale_range=(-0.01, 0.01),
-                    spatial_size=[160, 160, 144],
-                    prob=0.2,
-                ),
-                transforms.RandShiftIntensityd(keys=["image"], offsets=0.05, prob=0.2),
-                transforms.RandAdjustContrastd(keys=["image"], gamma=(0.97, 1.03), prob=0.2),
-                transforms.ThresholdIntensityd(keys=["image"], threshold=1, above=False, cval=1.0),
-                transforms.ThresholdIntensityd(keys=["image"], threshold=0, above=True, cval=0),
+                transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
                 transforms.ToTensord(keys=["image"]),
             ]
         )
@@ -113,7 +92,7 @@ def get_dataloader(
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        drop_last=drop_last,
+        drop_last=False,
         pin_memory=False,
         persistent_workers=True,
     )
@@ -124,7 +103,7 @@ def get_dataloader(
         val_ds,
         batch_size=batch_size,
         num_workers=num_workers,
-        drop_last=True,
+        drop_last=False,
         pin_memory=False,
         persistent_workers=True,
     )
@@ -168,10 +147,7 @@ def log_mlflow(
         mlflow.log_metric(f"loss", val_loss, 0)
 
         raw_model = model.module if hasattr(model, "module") else model
-
         mlflow.pytorch.log_model(raw_model, "final_model")
-        raw_model.load_state_dict(torch.load(str(run_dir / "best_model.pth")))
-        mlflow.pytorch.log_model(raw_model, "best_model")
 
 
 def get_figure(

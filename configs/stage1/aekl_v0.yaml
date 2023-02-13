@@ -5,21 +5,20 @@ stage1:
   adv_weight: 0.005
   kl_weight: 0.00000001
   params:
-    spatial_dims: 3
+    spatial_dims: 2
     in_channels: 1
     out_channels: 1
-    num_channels: 64
+    num_channels: [64, 128, 128, 128]
     latent_channels: 3
-    ch_mult: [1, 2, 2, 2]
     num_res_blocks: 2
     attention_levels: [False, False, False, False]
-    with_encoder_nonlocal_attn: False
-    with_decoder_nonlocal_attn: False
+    with_encoder_nonlocal_attn: True
+    with_decoder_nonlocal_attn: True
 
 discriminator:
   params:
-    spatial_dims: 3
-    num_channels: 64
+    spatial_dims: 2
+    num_channels: 128
     num_layers_d: 3
     in_channels: 1
     out_channels: 1
@@ -31,7 +30,5 @@ discriminator:
 
 perceptual_network:
   params:
-    spatial_dims: 3
+    spatial_dims: 2
     network_type: "squeeze"
-    is_fake_3d: True
-    fake_3d_ratio: 0.5
