@@ -6,3 +6,4 @@ tensorboardX
 omegaconf==2.3.0
 pynvml
 gdown
+x-transformers==1.8.1
