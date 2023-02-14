@@ -176,10 +176,6 @@ def get_figure(
     recons_npy_0 = np.clip(a=recons[0, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
     img_npy_1 = np.clip(a=img[1, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
     recons_npy_1 = np.clip(a=recons[1, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
-    img_npy_2 = np.clip(a=img[2, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
-    recons_npy_2 = np.clip(a=recons[2, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
-    img_npy_3 = np.clip(a=img[3, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
-    recons_npy_3 = np.clip(a=recons[3, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
 
     img_row_0 = np.concatenate(
         (
@@ -191,26 +187,8 @@ def get_figure(
         axis=1,
     )
 
-    img_row_1 = np.concatenate(
-        (
-            img_npy_2,
-            recons_npy_2,
-            img_npy_3,
-            recons_npy_3,
-        ),
-        axis=1,
-    )
-
-    img = np.concatenate(
-        (
-            img_row_0,
-            img_row_1,
-        ),
-        axis=0,
-    )
-
     fig = plt.figure(dpi=300)
-    plt.imshow(img, cmap="gray")
+    plt.imshow(img_row_0, cmap="gray")
     plt.axis("off")
     return fig
 
