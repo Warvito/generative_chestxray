@@ -1,7 +1,7 @@
 seed=42
 run_dir="aekl_v0"
-training_ids="/project/outputs/ids/training.tsv"
-validation_ids="/project/outputs/ids/validation.tsv"
+training_ids="/project/outputs/ids/train_ids.tsv"
+validation_ids="/project/outputs/ids/val_ids.tsv"
 config_file="/project/configs/stage1/aekl_v0.yaml"
 batch_size=32
 n_epochs=500
@@ -22,7 +22,7 @@ runai submit \
   --host-ipc \
   --project wds20 \
   --volume /nfs/home/wds20/projects/generative_mimic/:/project/ \
-  --volume /nfs/home/wds20/datasets/MIMIC-CXR-JPG_v2.0.0/rawdata/:/data/ \
+  --volume /nfs/home/wds20/datasets/MIMIC-CXR-JPG_v2.0.0/:/data/ \
   --command -- bash /project/src/bash/start_script.sh \
     python3 /project/src/python/training/train_aekl.py \
       seed=${seed} \

@@ -52,6 +52,12 @@ def get_dataloader(
         [
             transforms.LoadImaged(keys=["image"]),
             transforms.EnsureChannelFirstd(keys=["image"]),
+            transforms.Lambdad(
+                keys=["image"],
+                func=lambda x: x[0, :, :][
+                    None,
+                ],
+            ),
             transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),
             transforms.ScaleIntensityRanged(keys=["image"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0, clip=True),
             transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
@@ -63,6 +69,12 @@ def get_dataloader(
             [
                 transforms.LoadImaged(keys=["image"]),
                 transforms.EnsureChannelFirstd(keys=["image"]),
+                transforms.Lambdad(
+                    keys=["image"],
+                    func=lambda x: x[0, :, :][
+                        None,
+                    ],
+                ),
                 transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),
                 transforms.ScaleIntensityRanged(
                     keys=["image"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0, clip=True
@@ -76,6 +88,12 @@ def get_dataloader(
             [
                 transforms.LoadImaged(keys=["image"]),
                 transforms.EnsureChannelFirstd(keys=["image"]),
+                transforms.Lambdad(
+                    keys=["image"],
+                    func=lambda x: x[0, :, :][
+                        None,
+                    ],
+                ),
                 transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),
                 transforms.ScaleIntensityRanged(
                     keys=["image"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0, clip=True
