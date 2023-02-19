@@ -48,7 +48,6 @@ def train_aekl(
     adv_weight: float,
     perceptual_weight: float,
     kl_weight: float,
-    use_bfloat: bool = False,
 ) -> float:
     scaler_g = GradScaler()
     scaler_d = GradScaler()
@@ -66,7 +65,6 @@ def train_aekl(
         kl_weight=kl_weight,
         adv_weight=adv_weight,
         perceptual_weight=perceptual_weight,
-        use_bfloat=use_bfloat,
     )
     print(f"epoch {start_epoch} val loss: {val_loss:.4f}")
     for epoch in range(start_epoch, n_epochs):
@@ -85,7 +83,6 @@ def train_aekl(
             perceptual_weight=perceptual_weight,
             scaler_g=scaler_g,
             scaler_d=scaler_d,
-            use_bfloat=use_bfloat,
         )
 
         if (epoch + 1) % eval_freq == 0:
@@ -100,7 +97,6 @@ def train_aekl(
                 kl_weight=kl_weight,
                 adv_weight=adv_weight,
                 perceptual_weight=perceptual_weight,
-                use_bfloat=use_bfloat,
             )
             print(f"epoch {epoch + 1} val loss: {val_loss:.4f}")
             print_gpu_memory_report()
@@ -142,9 +138,7 @@ def train_epoch_aekl(
     perceptual_weight: float,
     scaler_g: GradScaler,
     scaler_d: GradScaler,
-    use_bfloat: bool = False,
 ) -> None:
-    dtype = torch.bfloat16 if use_bfloat else None
 
     model.train()
     discriminator.train()
@@ -155,7 +149,7 @@ def train_epoch_aekl(
 
         # GENERATOR
         optimizer_g.zero_grad(set_to_none=True)
-        with autocast(enabled=True, dtype=dtype):
+        with autocast(enabled=True):
             reconstruction, z_mu, z_sigma = model(x=images)
             l1_loss = F.l1_loss(reconstruction.float(), images.float())
             p_loss = perceptual_loss(reconstruction.float(), images.float())
@@ -192,7 +186,7 @@ def train_epoch_aekl(
         # DISCRIMINATOR
         optimizer_d.zero_grad(set_to_none=True)
 
-        with autocast(enabled=True, dtype=dtype):
+        with autocast(enabled=True):
             logits_fake = discriminator(reconstruction.contiguous().detach())
             fake_label = torch.zeros_like(logits_fake, device=logits_fake.device)
             loss_d_fake = F.mse_loss(logits_fake, fake_label)
@@ -243,7 +237,6 @@ def eval_aekl(
     kl_weight: float,
     adv_weight: float,
     perceptual_weight: float,
-    use_bfloat: bool = False,
 ) -> float:
     model.eval()
     discriminator.eval()
@@ -252,7 +245,7 @@ def eval_aekl(
     for x in loader:
         images = x["image"].to(device)
 
-        with autocast(enabled=True, dtype=torch.bfloat16 if use_bfloat else None):
+        with autocast(enabled=True):
             # GENERATOR
             reconstruction, z_mu, z_sigma = model(x=images)
             l1_loss = F.l1_loss(reconstruction.float(), images.float())

@@ -1,16 +1,17 @@
 seed=42
-run_dir="aekl_v0_old_disc"
+run_dir="aekl_v0_original_disc"
 training_ids="/project/outputs/ids/train_ids.tsv"
 validation_ids="/project/outputs/ids/val_ids.tsv"
 config_file="/project/configs/stage1/aekl_v0_old_disc.yaml"
 batch_size=36
 n_epochs=50
+disc_start=5
 eval_freq=3
 num_workers=32
 experiment="AEKL"
 
 runai submit \
-  --name mimic-aekl-old-disc-v0 \
+  --name mimic-aekl-original-disc-v0 \
   --image aicregistry:5000/wds20:ldm_mimic \
   --backoff-limit 0 \
   --gpu 4 \
@@ -31,6 +32,7 @@ runai submit \
       config_file=${config_file} \
       batch_size=${batch_size} \
       n_epochs=${n_epochs} \
+      disc_start=${disc_start} \
       eval_freq=${eval_freq} \
       num_workers=${num_workers} \
       experiment=${experiment}

@@ -1,3 +1,6 @@
+"""
+Implement script using the original discriminator and adversarial loss.
+"""
 import argparse
 import warnings
 from pathlib import Path
@@ -11,7 +14,7 @@ from monai.config import print_config
 from monai.utils import set_determinism
 from omegaconf import OmegaConf
 from tensorboardX import SummaryWriter
-from training_functions_old_disc import train_aekl
+from training_functions_original_disc import train_aekl
 from util import get_dataloader, log_mlflow
 
 warnings.filterwarnings("ignore")
@@ -27,6 +30,7 @@ def parse_args():
     parser.add_argument("--config_file", help="Location of file with validation ids.")
     parser.add_argument("--batch_size", type=int, default=256, help="Training batch size.")
     parser.add_argument("--n_epochs", type=int, default=25, help="Number of epochs to train.")
+    parser.add_argument("--epoch_disc_start", type=int, default=5, help="Epoch when discriminator loss starts.")
     parser.add_argument("--eval_freq", type=int, default=10, help="Number of epochs to between evaluations.")
     parser.add_argument("--num_workers", type=int, default=8, help="Number of loader workers")
     parser.add_argument("--experiment", help="Mlflow experiment name.")
@@ -120,6 +124,7 @@ def main(args):
         optimizer_g=optimizer_g,
         optimizer_d=optimizer_d,
         n_epochs=args.n_epochs,
+        epoch_disc_start=args.epoch_disc_start,
         eval_freq=args.eval_freq,
         writer_train=writer_train,
         writer_val=writer_val,

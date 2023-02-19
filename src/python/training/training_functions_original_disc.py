@@ -8,7 +8,7 @@ from pynvml.smi import nvidia_smi
 from tensorboardX import SummaryWriter
 from torch.cuda.amp import GradScaler, autocast
 from tqdm import tqdm
-from util import log_ldm_sample_unconditioned, log_reconstructions
+from util import log_reconstructions
 
 
 def get_lr(optimizer):
@@ -26,6 +26,30 @@ def print_gpu_memory_report():
             print(f"gpu:{i} mem(%) {int(mem_report['used'] * 100.0 / mem_report['total'])}")
 
 
+def hinge_d_loss(logits_real, logits_fake):
+    loss_real = torch.mean(F.relu(1.0 - logits_real))
+    loss_fake = torch.mean(F.relu(1.0 + logits_fake))
+    d_loss = 0.5 * (loss_real + loss_fake)
+    return d_loss
+
+
+def vanilla_d_loss(logits_real, logits_fake):
+    d_loss = 0.5 * (
+        torch.mean(torch.nn.functional.softplus(-logits_real)) + torch.mean(torch.nn.functional.softplus(logits_fake))
+    )
+    return d_loss
+
+
+def calculate_adaptive_weight(nll_loss, g_loss, discriminator_weight, last_layer):
+    nll_grads = torch.autograd.grad(nll_loss, last_layer, retain_graph=True)[0]
+    g_grads = torch.autograd.grad(g_loss, last_layer, retain_graph=True)[0]
+
+    d_weight = torch.norm(nll_grads) / (torch.norm(g_grads) + 1e-4)
+    d_weight = torch.clamp(d_weight, 0.0, 1e4).detach()
+    d_weight = d_weight * discriminator_weight
+    return d_weight
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # AUTOENCODER KL
 # ----------------------------------------------------------------------------------------------------------------------
@@ -40,6 +64,7 @@ def train_aekl(
     optimizer_g: torch.optim.Optimizer,
     optimizer_d: torch.optim.Optimizer,
     n_epochs: int,
+    epoch_disc_start: int,
     eval_freq: int,
     writer_train: SummaryWriter,
     writer_val: SummaryWriter,
@@ -61,6 +86,7 @@ def train_aekl(
         loader=val_loader,
         device=device,
         step=len(train_loader) * start_epoch,
+        step_disc_start=len(train_loader) * epoch_disc_start,
         writer=writer_val,
         kl_weight=kl_weight,
         adv_weight=adv_weight,
@@ -77,6 +103,7 @@ def train_aekl(
             optimizer_d=optimizer_d,
             device=device,
             epoch=epoch,
+            epoch_disc_start=epoch_disc_start,
             writer=writer_train,
             kl_weight=kl_weight,
             adv_weight=adv_weight,
@@ -93,6 +120,7 @@ def train_aekl(
                 loader=val_loader,
                 device=device,
                 step=len(train_loader) * epoch,
+                step_disc_start=len(train_loader) * epoch_disc_start,
                 writer=writer_val,
                 kl_weight=kl_weight,
                 adv_weight=adv_weight,
@@ -132,6 +160,7 @@ def train_epoch_aekl(
     optimizer_d: torch.optim.Optimizer,
     device: torch.device,
     epoch: int,
+    epoch_disc_start: int,
     writer: SummaryWriter,
     kl_weight: float,
     adv_weight: float,
@@ -139,6 +168,7 @@ def train_epoch_aekl(
     scaler_g: GradScaler,
     scaler_d: GradScaler,
 ) -> None:
+
     model.train()
     discriminator.train()
 
@@ -156,9 +186,17 @@ def train_epoch_aekl(
             kl_loss = 0.5 * torch.sum(z_mu.pow(2) + z_sigma.pow(2) - torch.log(z_sigma.pow(2)) - 1, dim=[1, 2, 3])
             kl_loss = torch.sum(kl_loss) / kl_loss.shape[0]
 
-            logits_fake = discriminator(reconstruction.contiguous().float())[-1]
-            real_label = torch.ones_like(logits_fake, device=logits_fake.device)
-            generator_loss = F.mse_loss(logits_fake, real_label)
+            logits_fake = discriminator(reconstruction.contiguous().float())
+            generator_loss = -torch.mean(logits_fake)
+
+            rec_loss = l1_loss + perceptual_weight * p_loss
+            rec_loss = rec_loss.mean()
+            #
+            # try:
+            #     d_weight = calculate_adaptive_weight(rec_loss, generator_loss, last_layer=model.decoder.blocks[-1].conv.weight[0])
+            # except RuntimeError:
+            #     assert not model.training
+            #     d_weight = torch.tensor(0.0)
 
             loss = l1_loss + kl_weight * kl_loss + perceptual_weight * p_loss + adv_weight * generator_loss
 
@@ -186,10 +224,10 @@ def train_epoch_aekl(
         optimizer_d.zero_grad(set_to_none=True)
 
         with autocast(enabled=True):
-            logits_fake = discriminator(reconstruction.contiguous().detach())[-1]
+            logits_fake = discriminator(reconstruction.contiguous().detach())
             fake_label = torch.zeros_like(logits_fake, device=logits_fake.device)
             loss_d_fake = F.mse_loss(logits_fake, fake_label)
-            logits_real = discriminator(images.contiguous().detach())[-1]
+            logits_real = discriminator(images.contiguous().detach())
             real_label = torch.ones_like(logits_real, device=logits_real.device)
             loss_d_real = F.mse_loss(logits_real, real_label)
             discriminator_loss = (loss_d_fake + loss_d_real) * 0.5
@@ -251,15 +289,16 @@ def eval_aekl(
             p_loss = perceptual_loss(reconstruction.float(), images.float())
             kl_loss = 0.5 * torch.sum(z_mu.pow(2) + z_sigma.pow(2) - torch.log(z_sigma.pow(2)) - 1, dim=[1, 2, 3])
             kl_loss = torch.sum(kl_loss) / kl_loss.shape[0]
-            logits_fake = discriminator(reconstruction.contiguous().float())[-1]
+
+            logits_fake = discriminator(reconstruction.contiguous().float())
             real_label = torch.ones_like(logits_fake, device=logits_fake.device)
             generator_loss = F.mse_loss(logits_fake, real_label)
 
             # DISCRIMINATOR
-            logits_fake = discriminator(reconstruction.contiguous().detach())[-1]
+            logits_fake = discriminator(reconstruction.contiguous().detach())
             fake_label = torch.zeros_like(logits_fake, device=logits_fake.device)
             loss_d_fake = F.mse_loss(logits_fake, fake_label)
-            logits_real = discriminator(images.contiguous().detach())[-1]
+            logits_real = discriminator(images.contiguous().detach())
             real_label = torch.ones_like(logits_real, device=logits_real.device)
             loss_d_real = F.mse_loss(logits_real, real_label)
             discriminator_loss = (loss_d_fake + loss_d_real) * 0.5
@@ -299,182 +338,3 @@ def eval_aekl(
     )
 
     return total_losses["l1_loss"]
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Latent Diffusion Model Unconditioned
-# ----------------------------------------------------------------------------------------------------------------------
-def train_ldm(
-    model: nn.Module,
-    stage1: nn.Module,
-    scheduler: nn.Module,
-    start_epoch: int,
-    best_loss: float,
-    train_loader: torch.utils.data.DataLoader,
-    val_loader: torch.utils.data.DataLoader,
-    optimizer: torch.optim.Optimizer,
-    n_epochs: int,
-    eval_freq: int,
-    writer_train: SummaryWriter,
-    writer_val: SummaryWriter,
-    device: torch.device,
-    run_dir: Path,
-) -> float:
-    scaler = GradScaler()
-    raw_model = model.module if hasattr(model, "module") else model
-
-    val_loss = eval_ldm(
-        model=model,
-        stage1=stage1,
-        scheduler=scheduler,
-        loader=val_loader,
-        device=device,
-        step=len(train_loader) * start_epoch,
-        writer=writer_val,
-        sample=False,
-    )
-    print(f"epoch {start_epoch} val loss: {val_loss:.4f}")
-
-    for epoch in range(start_epoch, n_epochs):
-        train_epoch_ldm(
-            model=model,
-            stage1=stage1,
-            scheduler=scheduler,
-            loader=train_loader,
-            optimizer=optimizer,
-            device=device,
-            epoch=epoch,
-            writer=writer_train,
-            scaler=scaler,
-        )
-
-        if (epoch + 1) % eval_freq == 0:
-            val_loss = eval_ldm(
-                model=model,
-                stage1=stage1,
-                scheduler=scheduler,
-                loader=val_loader,
-                device=device,
-                step=len(train_loader) * epoch,
-                writer=writer_val,
-                sample=True if (epoch + 1) % (eval_freq * 2) == 0 else False,
-            )
-
-            print(f"epoch {epoch + 1} val loss: {val_loss:.4f}")
-
-            # Save checkpoint
-            checkpoint = {
-                "epoch": epoch + 1,
-                "diffusion": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
-                "best_loss": best_loss,
-            }
-            torch.save(checkpoint, str(run_dir / "checkpoint.pth"))
-
-            if val_loss <= best_loss:
-                print(f"New best val loss {val_loss}")
-                best_loss = val_loss
-                torch.save(raw_model.state_dict(), str(run_dir / "best_model.pth"))
-
-    print(f"Training finished!")
-    print(f"Saving final model...")
-    torch.save(raw_model.state_dict(), str(run_dir / "final_model.pth"))
-
-    return val_loss
-
-
-def train_epoch_ldm(
-    model: nn.Module,
-    stage1: nn.Module,
-    scheduler: nn.Module,
-    loader: torch.utils.data.DataLoader,
-    optimizer: torch.optim.Optimizer,
-    device: torch.device,
-    epoch: int,
-    writer: SummaryWriter,
-    scaler: GradScaler,
-) -> None:
-    model.train()
-
-    pbar = tqdm(enumerate(loader), total=len(loader))
-    for step, x in pbar:
-        images = x["image"].to(device)
-        timesteps = torch.randint(0, scheduler.num_train_timesteps, (images.shape[0],), device=device).long()
-
-        optimizer.zero_grad(set_to_none=True)
-        with autocast(enabled=True):
-            with torch.no_grad():
-                e = stage1(images)
-
-            noise = torch.randn_like(e).to(device)
-            noisy_e = scheduler.add_noise(original_samples=e, noise=noise, timesteps=timesteps)
-
-            noise_pred = model(x=noisy_e, timesteps=timesteps)
-            loss = F.mse_loss(noise_pred.float(), noise.float())
-
-        losses = OrderedDict(loss=loss)
-
-        scaler.scale(losses["loss"]).backward()
-        scaler.step(optimizer)
-        scaler.update()
-
-        writer.add_scalar("lr", get_lr(optimizer), epoch * len(loader) + step)
-
-        for k, v in losses.items():
-            writer.add_scalar(f"{k}", v.item(), epoch * len(loader) + step)
-
-        pbar.set_postfix({"epoch": epoch, "loss": f"{losses['loss'].item():.5f}", "lr": f"{get_lr(optimizer):.6f}"})
-
-
-@torch.no_grad()
-def eval_ldm(
-    model: nn.Module,
-    stage1: nn.Module,
-    scheduler: nn.Module,
-    loader: torch.utils.data.DataLoader,
-    device: torch.device,
-    step: int,
-    writer: SummaryWriter,
-    sample: bool = False,
-) -> float:
-    model.eval()
-    raw_stage1 = stage1.module if hasattr(stage1, "module") else stage1
-    raw_model = model.module if hasattr(model, "module") else model
-    total_losses = OrderedDict()
-
-    for x in loader:
-        images = x["image"].to(device)
-        timesteps = torch.randint(0, scheduler.num_train_timesteps, (images.shape[0],), device=device).long()
-
-        with autocast(enabled=True):
-            e = stage1(images)
-            noise = torch.randn_like(e).to(device)
-            noisy_e = scheduler.add_noise(original_samples=e, noise=noise, timesteps=timesteps)
-
-            noise_pred = model(x=noisy_e, timesteps=timesteps)
-            loss = F.mse_loss(noise_pred.float(), noise.float())
-
-        loss = loss.mean()
-        losses = OrderedDict(loss=loss)
-
-        for k, v in losses.items():
-            total_losses[k] = total_losses.get(k, 0) + v.item() * images.shape[0]
-
-    for k in total_losses.keys():
-        total_losses[k] /= len(loader.dataset)
-
-    for k, v in total_losses.items():
-        writer.add_scalar(f"{k}", v, step)
-
-    if sample:
-        log_ldm_sample_unconditioned(
-            model=raw_model,
-            stage1=raw_stage1,
-            scheduler=scheduler,
-            spatial_shape=tuple(e.shape[1:]),
-            writer=writer,
-            step=step,
-            device=device,
-        )
-
-    return total_losses["loss"]

@@ -7,7 +7,6 @@ batch_size=48
 n_epochs=500
 eval_freq=3
 num_workers=32
-use_bfloat=0
 experiment="AEKL"
 
 runai submit \
@@ -34,5 +33,4 @@ runai submit \
       n_epochs=${n_epochs} \
       eval_freq=${eval_freq} \
       num_workers=${num_workers} \
-      use_bfloat=${use_bfloat} \
       experiment=${experiment}

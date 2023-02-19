@@ -29,7 +29,6 @@ def parse_args():
     parser.add_argument("--n_epochs", type=int, default=25, help="Number of epochs to train.")
     parser.add_argument("--eval_freq", type=int, default=10, help="Number of epochs to between evaluations.")
     parser.add_argument("--num_workers", type=int, default=8, help="Number of loader workers")
-    parser.add_argument("--use_bfloat", type=int, default=0, help="Option to use bfloat16 or not")
     parser.add_argument("--experiment", help="Mlflow experiment name.")
 
     args = parser.parse_args()
@@ -129,7 +128,6 @@ def main(args):
         kl_weight=config["stage1"]["kl_weight"],
         adv_weight=config["stage1"]["adv_weight"],
         perceptual_weight=config["stage1"]["perceptual_weight"],
-        use_bfloat=bool(args.use_bfloat),
     )
 
     log_mlflow(
