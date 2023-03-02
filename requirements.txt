@@ -1,7 +1,6 @@
 lpips==0.1.4
 pre-commit
 monai-weekly[nibabel, matplotlib, pandas, mlflow, tqdm]==1.2.dev2304
-xformers==0.0.16
 tensorboardX
 omegaconf==2.3.0
 pynvml
