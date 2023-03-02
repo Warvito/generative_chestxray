@@ -28,6 +28,7 @@ def parse_args():
     parser.add_argument("--validation_ids", help="Location of file with validation ids.")
     parser.add_argument("--config_file", help="Location of file with validation ids.")
     parser.add_argument("--stage1_uri", help="Path readable by load_model.")
+    parser.add_argument("--scale_factor", type=float, help="Path readable by load_model.")
     parser.add_argument("--batch_size", type=int, default=256, help="Training batch size.")
     parser.add_argument("--n_epochs", type=int, default=25, help="Number of epochs to train.")
     parser.add_argument("--eval_freq", type=int, default=10, help="Number of epochs to between evaluations.")
@@ -146,6 +147,7 @@ def main(args):
         writer_val=writer_val,
         device=device,
         run_dir=run_dir,
+        scale_factor=args.scale_factor,
     )
 
     log_mlflow(

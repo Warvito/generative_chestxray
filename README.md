@@ -16,5 +16,4 @@ TODO LIST:
 
 - [ ] Add original implementation from adversarial training.
 - [ ] Test with Microsoft and Stable Diffusion text part.
-- [ ] Add v-prediction
-- [ ] Classifier-free guidance
+- [ ] Add synthetic sentences based on other source of information

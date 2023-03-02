@@ -44,9 +44,9 @@ def main(args):
 
     # save the data lists
     output_dir = Path(args.output_dir)
-    train_data_list.to_csv(output_dir / "train_ids.tsv", index=False, sep="\t")
-    val_data_list.to_csv(output_dir / "val_ids.tsv", index=False, sep="\t")
-    test_data_list.to_csv(output_dir / "test_ids.tsv", index=False, sep="\t")
+    train_data_list.to_csv(output_dir / "train.tsv", index=False, sep="\t")
+    val_data_list.to_csv(output_dir / "validation.tsv", index=False, sep="\t")
+    test_data_list.to_csv(output_dir / "test.tsv", index=False, sep="\t")
 
 
 if __name__ == "__main__":
