@@ -100,7 +100,7 @@ def main(args):
     diffusion = DiffusionModelUNet(**config["ldm"].get("params", dict()))
     scheduler = DDPMScheduler(**config["ldm"].get("scheduler", dict()))
 
-    text_encoder = CLIPTextModel.from_pretrained("openai/clip-vit-large-patch14")
+    text_encoder = CLIPTextModel.from_pretrained("stabilityai/stable-diffusion-2-1-base", subfolder="text_encoder")
 
     print(f"Let's use {torch.cuda.device_count()} GPUs!")
     device = torch.device("cuda")

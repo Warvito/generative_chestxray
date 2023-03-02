@@ -81,7 +81,7 @@ class RandomSelectExcerptd(Randomizable, MapTransform):
 
 class ApplyTokenizer(Transform):
     def __init__(self) -> None:
-        self.tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
+        self.tokenizer = CLIPTokenizer.from_pretrained("stabilityai/stable-diffusion-2-1-base", subfolder="tokenizer")
 
     def __call__(self, tokenized_sentence):
         text_inputs = self.tokenizer(
