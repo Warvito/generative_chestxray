@@ -1,13 +1,16 @@
 import json
-from typing import Callable, Hashable, Mapping, Optional, Sequence
+from typing import Optional
 
 import numpy as np
-import torch
 from monai.config import KeysCollection, PathLike
 from monai.data.image_reader import ImageReader
-from monai.transforms.transform import MapTransform, Randomizable, RandomizableTransform, Transform
-from monai.utils import ensure_tuple_rep
+from monai.transforms.transform import MapTransform, Randomizable, Transform
 from transformers import CLIPTokenizer
+
+# from typing import Callable, Hashable, Mapping, Optional, Sequence
+# import torch
+# from monai.transforms.transform import RandomizableTransform
+# from monai.utils import ensure_tuple_rep
 
 
 class LoadJSON(Transform):
@@ -112,69 +115,70 @@ class ApplyTokenizerd(MapTransform):
         return d
 
 
-class Lambda(Transform):
-    def __init__(self, func: Callable | None = None) -> None:
-        if func is not None and not callable(func):
-            raise TypeError(f"func must be None or callable but is {type(func).__name__}.")
-        self.func = func
-
-    def __call__(self, img, func):
-        fn = func if func is not None else self.func
-        if not callable(fn):
-            raise TypeError(f"func must be None or callable but is {type(fn).__name__}.")
-        out = fn(img)
-        return out
-
-
-class Lambdad(MapTransform):
-    def __init__(
-        self,
-        keys: KeysCollection,
-        func: Sequence[Callable] | Callable,
-        overwrite: Sequence[bool] | bool | Sequence[str] | str = True,
-        allow_missing_keys: bool = False,
-    ) -> None:
-        super().__init__(keys, allow_missing_keys)
-        self.func = ensure_tuple_rep(func, len(self.keys))
-        self.overwrite = ensure_tuple_rep(overwrite, len(self.keys))
-        self._lambd = Lambda()
-
-    def __call__(self, data: Mapping[Hashable, torch.Tensor]) -> dict[Hashable, torch.Tensor]:
-        d = dict(data)
-        for key, func, overwrite in self.key_iterator(d, self.func, self.overwrite):
-            ret = self._lambd(img=d[key], func=func)
-            if overwrite and isinstance(overwrite, bool):
-                d[key] = ret
-            elif isinstance(overwrite, str):
-                d[overwrite] = ret
-        return d
-
-
-class RandLambdad(Lambdad, RandomizableTransform):
-    def __init__(
-        self,
-        keys: KeysCollection,
-        func: Sequence[Callable] | Callable,
-        overwrite: Sequence[bool] | bool = True,
-        prob: float = 1.0,
-        allow_missing_keys: bool = False,
-    ) -> None:
-        Lambdad.__init__(
-            self=self,
-            keys=keys,
-            func=func,
-            overwrite=overwrite,
-            allow_missing_keys=allow_missing_keys,
-        )
-        RandomizableTransform.__init__(self=self, prob=prob, do_transform=True)
-
-    def __call__(self, data):
-        self.randomize(data)
-        d = dict(data)
-        for key, func, overwrite in self.key_iterator(d, self.func, self.overwrite):
-            ret = d[key]
-            if self._do_transform:
-                ret = self._lambd(ret, func=func)
-            if overwrite:
-                d[key] = ret
-        return d
+#
+# class Lambda(Transform):
+#     def __init__(self, func: Callable | None = None) -> None:
+#         if func is not None and not callable(func):
+#             raise TypeError(f"func must be None or callable but is {type(func).__name__}.")
+#         self.func = func
+#
+#     def __call__(self, img, func):
+#         fn = func if func is not None else self.func
+#         if not callable(fn):
+#             raise TypeError(f"func must be None or callable but is {type(fn).__name__}.")
+#         out = fn(img)
+#         return out
+#
+#
+# class Lambdad(MapTransform):
+#     def __init__(
+#         self,
+#         keys: KeysCollection,
+#         func: Sequence[Callable] | Callable,
+#         overwrite: Sequence[bool] | bool | Sequence[str] | str = True,
+#         allow_missing_keys: bool = False,
+#     ) -> None:
+#         super().__init__(keys, allow_missing_keys)
+#         self.func = ensure_tuple_rep(func, len(self.keys))
+#         self.overwrite = ensure_tuple_rep(overwrite, len(self.keys))
+#         self._lambd = Lambda()
+#
+#     def __call__(self, data: Mapping[Hashable, torch.Tensor]) -> dict[Hashable, torch.Tensor]:
+#         d = dict(data)
+#         for key, func, overwrite in self.key_iterator(d, self.func, self.overwrite):
+#             ret = self._lambd(img=d[key], func=func)
+#             if overwrite and isinstance(overwrite, bool):
+#                 d[key] = ret
+#             elif isinstance(overwrite, str):
+#                 d[overwrite] = ret
+#         return d
+#
+#
+# class RandLambdad(Lambdad, RandomizableTransform):
+#     def __init__(
+#         self,
+#         keys: KeysCollection,
+#         func: Sequence[Callable] | Callable,
+#         overwrite: Sequence[bool] | bool = True,
+#         prob: float = 1.0,
+#         allow_missing_keys: bool = False,
+#     ) -> None:
+#         Lambdad.__init__(
+#             self=self,
+#             keys=keys,
+#             func=func,
+#             overwrite=overwrite,
+#             allow_missing_keys=allow_missing_keys,
+#         )
+#         RandomizableTransform.__init__(self=self, prob=prob, do_transform=True)
+#
+#     def __call__(self, data):
+#         self.randomize(data)
+#         d = dict(data)
+#         for key, func, overwrite in self.key_iterator(d, self.func, self.overwrite):
+#             ret = d[key]
+#             if self._do_transform:
+#                 ret = self._lambd(ret, func=func)
+#             if overwrite:
+#                 d[key] = ret
+#         return d
