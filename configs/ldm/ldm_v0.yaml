@@ -2,8 +2,8 @@ ldm:
   base_lr: 0.000025
   params:
     spatial_dims: 2
-    in_channels: 4
-    out_channels: 4
+    in_channels: 3
+    out_channels: 3
     num_res_blocks: 2
     num_channels: [256, 512, 768]
     attention_levels: [False, True, True]
