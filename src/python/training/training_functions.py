@@ -420,7 +420,7 @@ def train_epoch_ldm(
             with torch.no_grad():
                 e = stage1(images) * scale_factor
 
-            prompt_embeds = text_encoder(reports)
+            prompt_embeds = text_encoder(reports.squeeze(1))
             prompt_embeds = prompt_embeds[0]
 
             noise = torch.randn_like(e).to(device)
@@ -474,7 +474,7 @@ def eval_ldm(
         with autocast(enabled=True):
             e = stage1(images) * scale_factor
 
-            prompt_embeds = text_encoder(reports)
+            prompt_embeds = text_encoder(reports.squeeze(1))
             prompt_embeds = prompt_embeds[0]
 
             noise = torch.randn_like(e).to(device)
