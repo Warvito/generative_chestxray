@@ -22,11 +22,13 @@ ids_df = pd.concat([train_df, val_df, test_df], axis=0)
 
 for index, row in tqdm(ids_df.iterrows(), total=ids_df.shape[0]):
     selected_reports = section_df[section_df["study"] == f"s{str(row['study_id'])}"]
+    output_filename = output_dir / f"s{row['study_id']}.json"
+
+    if len(selected_reports) > 1:
+        raise ValueError("More than one report for the same study id")
+
     if len(selected_reports) == 0:
         data_dict = {"sentences": [""]}
-        filename = output_dir / f"s{row['study_id']}.json"
-        with open(filename, "w") as f:
-            json.dump(data_dict, f, indent=4)
 
     elif len(selected_reports) == 1:
         selected_report = selected_reports.iloc[0]
@@ -53,9 +55,9 @@ for index, row in tqdm(ids_df.iterrows(), total=ids_df.shape[0]):
         # save dict as json file
         if len(list_of_sentences) > 0:
             data_dict = {"sentences": list_of_sentences}
-            filename = output_dir / f"s{row['study_id']}.json"
-            with open(filename, "w") as f:
-                json.dump(data_dict, f, indent=4)
 
-    else:
-        raise ValueError("More than one report for the same study id")
+        else:
+            data_dict = {"sentences": [""]}
+
+    with open(output_filename, "w") as f:
+        json.dump(data_dict, f, indent=4)
