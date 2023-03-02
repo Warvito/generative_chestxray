@@ -8,6 +8,7 @@ echo ${MLFLOW_TRACKING_URI}
 
 # Define place to save lpips pretrained models
 export TORCH_HOME=/project/outputs/torch_home
+export HF_HOME=/project/outputs/hf_home
 
 # parse arguments
 CMD=""

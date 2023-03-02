@@ -8,7 +8,9 @@ from pynvml.smi import nvidia_smi
 from tensorboardX import SummaryWriter
 from torch.cuda.amp import GradScaler, autocast
 from tqdm import tqdm
-from util import log_ldm_sample_unconditioned, log_reconstructions
+from util import log_reconstructions
+
+# from util import log_ldm_sample_unconditioned, log_reconstructions
 
 
 def get_lr(optimizer):
@@ -451,6 +453,7 @@ def eval_ldm(
     model: nn.Module,
     stage1: nn.Module,
     scheduler: nn.Module,
+    text_encoder,
     loader: torch.utils.data.DataLoader,
     device: torch.device,
     step: int,
@@ -465,15 +468,25 @@ def eval_ldm(
 
     for x in loader:
         images = x["image"].to(device)
+        reports = x["report"].to(device)
         timesteps = torch.randint(0, scheduler.num_train_timesteps, (images.shape[0],), device=device).long()
 
         with autocast(enabled=True):
             e = stage1(images) * scale_factor
+
+            prompt_embeds = text_encoder(reports)
+            prompt_embeds = prompt_embeds[0]
+
             noise = torch.randn_like(e).to(device)
             noisy_e = scheduler.add_noise(original_samples=e, noise=noise, timesteps=timesteps)
+            noise_pred = model(x=noisy_e, timesteps=timesteps, context=prompt_embeds)
 
-            noise_pred = model(x=noisy_e, timesteps=timesteps)
-            loss = F.mse_loss(noise_pred.float(), noise.float())
+            if scheduler.prediction_type == "v_prediction":
+                # Use v-prediction parameterization
+                target = scheduler.get_velocity(images, noise, timesteps)
+            elif scheduler.prediction_type == "epsilon":
+                target = noise
+            loss = F.mse_loss(noise_pred.float(), target.float())
 
         loss = loss.mean()
         losses = OrderedDict(loss=loss)
@@ -487,16 +500,16 @@ def eval_ldm(
     for k, v in total_losses.items():
         writer.add_scalar(f"{k}", v, step)
 
-    if sample:
-        log_ldm_sample_unconditioned(
-            model=raw_model,
-            stage1=raw_stage1,
-            scheduler=scheduler,
-            spatial_shape=tuple(e.shape[1:]),
-            writer=writer,
-            step=step,
-            device=device,
-            scale_factor=scale_factor,
-        )
+    # if sample:
+    #     log_ldm_sample_unconditioned(
+    #         model=raw_model,
+    #         stage1=raw_stage1,
+    #         scheduler=scheduler,
+    #         spatial_shape=tuple(e.shape[1:]),
+    #         writer=writer,
+    #         step=step,
+    #         device=device,
+    #         scale_factor=scale_factor,
+    #     )
 
     return total_losses["loss"]
