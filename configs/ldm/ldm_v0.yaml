@@ -8,7 +8,7 @@ ldm:
     num_channels: [256, 512, 768]
     attention_levels: [False, True, True]
     with_conditioning: True
-    cross_attention_dim: 768
+    cross_attention_dim: 1024
     num_head_channels: [0, 512, 768]
   scheduler:
     beta_schedule: "scaled_linear"
