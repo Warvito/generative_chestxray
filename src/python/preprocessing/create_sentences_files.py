@@ -14,30 +14,48 @@ section_df = pd.read_csv(
 )
 nlp = spacy.load("en_core_web_sm")
 
-for index, row in tqdm(section_df.iterrows(), total=section_df.shape[0]):
-    list_of_sentences = []
-    if not isinstance(row["findings"], float):
-        section_text = row["findings"]
-        section_text = re.sub("\n", "", section_text)
-        section_text = re.sub(" +", " ", section_text)
-        doc = nlp(section_text)
-        for sent in doc.sents:
-            if len(sent.text) > 2:
-                list_of_sentences.append(sent.text)
+train_df = pd.read_csv("/media/walter/Storage/Projects/generative_mimic/outputs/ids/train.tsv", sep="\t")
+val_df = pd.read_csv("/media/walter/Storage/Projects/generative_mimic/outputs/ids/validation.tsv", sep="\t")
+test_df = pd.read_csv("/media/walter/Storage/Projects/generative_mimic/outputs/ids/test.tsv", sep="\t")
 
-    if not isinstance(row["impression"], float):
-        section_text = row["impression"]
-        section_text = re.sub(r"\n", "", section_text)
-        section_text = re.sub(r"\d+\.", "", section_text)
-        section_text = re.sub(" +", " ", section_text)
-        doc = nlp(section_text)
-        for sent in doc.sents:
-            if len(sent.text) > 2:
-                list_of_sentences.append(sent.text)
+ids_df = pd.concat([train_df, val_df, test_df], axis=0)
 
-    # save dict as json file
-    if len(list_of_sentences) > 0:
-        data_dict = {"sentences": list_of_sentences}
-        filename = output_dir / f"{row['study']}.json"
+for index, row in tqdm(ids_df.iterrows(), total=ids_df.shape[0]):
+    selected_reports = section_df[section_df["study"] == f"s{str(row['study_id'])}"]
+    if len(selected_reports) == 0:
+        data_dict = {"sentences": [""]}
+        filename = output_dir / f"s{row['study_id']}.json"
         with open(filename, "w") as f:
             json.dump(data_dict, f, indent=4)
+
+    elif len(selected_reports) == 1:
+        selected_report = selected_reports.iloc[0]
+        list_of_sentences = []
+        if not isinstance(selected_report["findings"], float):
+            section_text = selected_report["findings"]
+            section_text = re.sub("\n", "", section_text)
+            section_text = re.sub(" +", " ", section_text)
+            doc = nlp(section_text)
+            for sent in doc.sents:
+                if len(sent.text) > 2:
+                    list_of_sentences.append(sent.text)
+
+        if not isinstance(selected_report["impression"], float):
+            section_text = selected_report["impression"]
+            section_text = re.sub(r"\n", "", section_text)
+            section_text = re.sub(r"\d+\.", "", section_text)
+            section_text = re.sub(" +", " ", section_text)
+            doc = nlp(section_text)
+            for sent in doc.sents:
+                if len(sent.text) > 2:
+                    list_of_sentences.append(sent.text)
+
+        # save dict as json file
+        if len(list_of_sentences) > 0:
+            data_dict = {"sentences": list_of_sentences}
+            filename = output_dir / f"s{row['study_id']}.json"
+            with open(filename, "w") as f:
+                json.dump(data_dict, f, indent=4)
+
+    else:
+        raise ValueError("More than one report for the same study id")

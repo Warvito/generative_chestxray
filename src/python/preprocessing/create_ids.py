@@ -27,6 +27,8 @@ def main(args):
     for index, row in metadata_df.iterrows():
         data_list.append(
             {
+                "subject_id": str(int(row["subject_id"])),
+                "study_id": str(int(row["study_id"])),
                 "image": f"/data/rawdata/files/p{str(int(row['subject_id']))[:2]}/p{str(int(row['subject_id']))}/"
                 f"s{int(row['study_id'])}/{row['dicom_id']}.jpg",
                 "report": f"/data/derivatives/report_sentences/s{int(row['study_id'])}.json",
