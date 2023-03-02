@@ -1,13 +1,13 @@
 seed=2
 run_dir="aekl_v1_ldm_v0"
-training_ids="/project/outputs/ids/train.tsv"
+training_ids="/project/outputs/ids/validation.tsv"
 validation_ids="/project/outputs/ids/validation.tsv"
 stage1_uri="/project/mlruns/398344666374521908/6f280de5aa634aab96e6c31eed22a62b/artifacts/final_model"
 config_file="/project/configs/ldm/ldm_v0.yaml"
 scale_factor=0.3
 batch_size=64
-n_epochs=300
-eval_freq=5
+n_epochs=10
+eval_freq=1
 num_workers=16
 experiment="LDM"
 

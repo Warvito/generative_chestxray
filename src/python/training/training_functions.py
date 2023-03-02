@@ -503,6 +503,7 @@ def eval_ldm(
             model=raw_model,
             stage1=raw_stage1,
             scheduler=scheduler,
+            text_encoder=text_encoder,
             spatial_shape=tuple(e.shape[1:]),
             writer=writer,
             step=step,
