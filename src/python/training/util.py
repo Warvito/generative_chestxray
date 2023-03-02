@@ -228,6 +228,7 @@ def log_reconstructions(
 def log_ldm_sample_unconditioned(
     model: nn.Module,
     stage1: nn.Module,
+    text_encoder,
     scheduler: nn.Module,
     spatial_shape: Tuple,
     writer: SummaryWriter,
@@ -238,8 +239,12 @@ def log_ldm_sample_unconditioned(
     latent = torch.randn((1,) + spatial_shape)
     latent = latent.to(device)
 
+    prompt_embeds = torch.cat((49406 * torch.ones(1, 1), 49407 * torch.ones(1, 76)), 1).long()
+    prompt_embeds = text_encoder(prompt_embeds.squeeze(1))
+    prompt_embeds = prompt_embeds[0]
+
     for t in tqdm(scheduler.timesteps, ncols=70):
-        noise_pred = model(x=latent, timesteps=torch.asarray((t,)).to(device))
+        noise_pred = model(x=latent, timesteps=torch.asarray((t,)).to(device), context=prompt_embeds)
         latent, _ = scheduler.step(noise_pred, t, latent)
 
     x_hat = stage1.model.decode(latent / scale_factor)
