@@ -24,9 +24,6 @@ for index, row in tqdm(ids_df.iterrows(), total=ids_df.shape[0]):
     selected_reports = section_df[section_df["study"] == f"s{str(row['study_id'])}"]
     output_filename = output_dir / f"s{row['study_id']}.json"
 
-    if len(selected_reports) > 1:
-        raise ValueError("More than one report for the same study id")
-
     if len(selected_reports) == 0:
         data_dict = {"sentences": [""]}
 
