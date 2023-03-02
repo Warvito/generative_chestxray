@@ -13,6 +13,7 @@ from monai.utils import set_determinism
 from omegaconf import OmegaConf
 from tensorboardX import SummaryWriter
 from training_functions import train_ldm
+from transformers import CLIPTextModel
 from util import get_dataloader, log_mlflow
 
 warnings.filterwarnings("ignore")
@@ -38,6 +39,8 @@ def parse_args():
 
 
 class Stage1Wrapper(nn.Module):
+    """Wrapper for stage 1 model as a workaround for the DataParallel usage in the training loop."""
+
     def __init__(self, model: nn.Module) -> None:
         super().__init__()
         self.model = model
@@ -96,14 +99,18 @@ def main(args):
     diffusion = DiffusionModelUNet(**config["ldm"].get("params", dict()))
     scheduler = DDPMScheduler(**config["ldm"].get("scheduler", dict()))
 
+    text_encoder = CLIPTextModel.from_pretrained("openai/clip-vit-large-patch14")
+
     print(f"Let's use {torch.cuda.device_count()} GPUs!")
     device = torch.device("cuda")
     if torch.cuda.device_count() > 1:
         stage1 = torch.nn.DataParallel(stage1)
         diffusion = torch.nn.DataParallel(diffusion)
+        text_encoder = torch.nn.DataParallel(text_encoder)
 
     stage1 = stage1.to(device)
     diffusion = diffusion.to(device)
+    text_encoder = text_encoder.to(device)
 
     optimizer = optim.AdamW(diffusion.parameters(), lr=config["ldm"]["base_lr"])
 
@@ -127,6 +134,7 @@ def main(args):
         model=diffusion,
         stage1=stage1,
         scheduler=scheduler,
+        text_encoder=text_encoder,
         start_epoch=start_epoch,
         best_loss=best_loss,
         train_loader=train_loader,

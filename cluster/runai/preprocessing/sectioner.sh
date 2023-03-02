@@ -1,0 +1,16 @@
+runai submit \
+  --name mimic-sectioner \
+  --image aicregistry:5000/wds20:ldm_mimic \
+  --backoff-limit 0 \
+  --gpu 0 \
+  --cpu 4 \
+  --large-shm \
+  --run-as-user \
+  --host-ipc \
+  --project wds20 \
+  --volume /nfs/home/wds20/projects/generative_mimic/:/project/ \
+  --volume /nfs/home/wds20/datasets/MIMIC-CXR-JPG_v2.0.0/:/data/ \
+  --command -- python3 /project/src/python/preprocessing/create_section_files.py \
+      --reports_path="/data/rawdata/files" \
+      --output_path="/project/outputs/reports/" \
+      --no_split

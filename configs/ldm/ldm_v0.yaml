@@ -5,13 +5,14 @@ ldm:
     in_channels: 4
     out_channels: 4
     num_res_blocks: 2
-    num_channels: [256, 512, 768, 1024]
-    attention_levels: [False, True, True, True]
+    num_channels: [256, 512, 768]
+    attention_levels: [False, True, True]
     with_conditioning: True
-    cross_attention_dim: 2
-    num_head_channels: 256
+    cross_attention_dim: 768
+    num_head_channels: [0, 512, 768]
   scheduler:
     beta_schedule: "scaled_linear"
     num_train_timesteps: 1000
     beta_start: 0.0015
     beta_end: 0.0205
+    prediction_type: "v_prediction"

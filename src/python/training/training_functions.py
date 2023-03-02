@@ -308,6 +308,7 @@ def train_ldm(
     model: nn.Module,
     stage1: nn.Module,
     scheduler: nn.Module,
+    text_encoder,
     start_epoch: int,
     best_loss: float,
     train_loader: torch.utils.data.DataLoader,
@@ -319,6 +320,7 @@ def train_ldm(
     writer_val: SummaryWriter,
     device: torch.device,
     run_dir: Path,
+    scale_factor: float = 1.0,
 ) -> float:
     scaler = GradScaler()
     raw_model = model.module if hasattr(model, "module") else model
@@ -327,11 +329,13 @@ def train_ldm(
         model=model,
         stage1=stage1,
         scheduler=scheduler,
+        text_encoder=text_encoder,
         loader=val_loader,
         device=device,
         step=len(train_loader) * start_epoch,
         writer=writer_val,
         sample=False,
+        scale_factor=scale_factor,
     )
     print(f"epoch {start_epoch} val loss: {val_loss:.4f}")
 
@@ -340,12 +344,14 @@ def train_ldm(
             model=model,
             stage1=stage1,
             scheduler=scheduler,
+            text_encoder=text_encoder,
             loader=train_loader,
             optimizer=optimizer,
             device=device,
             epoch=epoch,
             writer=writer_train,
             scaler=scaler,
+            scale_factor=scale_factor,
         )
 
         if (epoch + 1) % eval_freq == 0:
@@ -353,14 +359,17 @@ def train_ldm(
                 model=model,
                 stage1=stage1,
                 scheduler=scheduler,
+                text_encoder=text_encoder,
                 loader=val_loader,
                 device=device,
                 step=len(train_loader) * epoch,
                 writer=writer_val,
                 sample=True if (epoch + 1) % (eval_freq * 2) == 0 else False,
+                scale_factor=scale_factor,
             )
 
             print(f"epoch {epoch + 1} val loss: {val_loss:.4f}")
+            print_gpu_memory_report()
 
             # Save checkpoint
             checkpoint = {
@@ -387,30 +396,41 @@ def train_epoch_ldm(
     model: nn.Module,
     stage1: nn.Module,
     scheduler: nn.Module,
+    text_encoder,
     loader: torch.utils.data.DataLoader,
     optimizer: torch.optim.Optimizer,
     device: torch.device,
     epoch: int,
     writer: SummaryWriter,
     scaler: GradScaler,
+    scale_factor: float = 1.0,
 ) -> None:
     model.train()
 
     pbar = tqdm(enumerate(loader), total=len(loader))
     for step, x in pbar:
         images = x["image"].to(device)
+        reports = x["report"].to(device)
         timesteps = torch.randint(0, scheduler.num_train_timesteps, (images.shape[0],), device=device).long()
 
         optimizer.zero_grad(set_to_none=True)
         with autocast(enabled=True):
             with torch.no_grad():
-                e = stage1(images)
+                e = stage1(images) * scale_factor
+
+            prompt_embeds = text_encoder(reports)
+            prompt_embeds = prompt_embeds[0]
 
             noise = torch.randn_like(e).to(device)
             noisy_e = scheduler.add_noise(original_samples=e, noise=noise, timesteps=timesteps)
+            noise_pred = model(x=noisy_e, timesteps=timesteps, context=prompt_embeds)
 
-            noise_pred = model(x=noisy_e, timesteps=timesteps)
-            loss = F.mse_loss(noise_pred.float(), noise.float())
+            if scheduler.prediction_type == "v_prediction":
+                # Use v-prediction parameterization
+                target = scheduler.get_velocity(images, noise, timesteps)
+            elif scheduler.prediction_type == "epsilon":
+                target = noise
+            loss = F.mse_loss(noise_pred.float(), target.float())
 
         losses = OrderedDict(loss=loss)
 
@@ -436,6 +456,7 @@ def eval_ldm(
     step: int,
     writer: SummaryWriter,
     sample: bool = False,
+    scale_factor: float = 1.0,
 ) -> float:
     model.eval()
     raw_stage1 = stage1.module if hasattr(stage1, "module") else stage1
@@ -447,7 +468,7 @@ def eval_ldm(
         timesteps = torch.randint(0, scheduler.num_train_timesteps, (images.shape[0],), device=device).long()
 
         with autocast(enabled=True):
-            e = stage1(images)
+            e = stage1(images) * scale_factor
             noise = torch.randn_like(e).to(device)
             noisy_e = scheduler.add_noise(original_samples=e, noise=noise, timesteps=timesteps)
 
@@ -475,6 +496,7 @@ def eval_ldm(
             writer=writer,
             step=step,
             device=device,
+            scale_factor=scale_factor,
         )
 
     return total_losses["loss"]

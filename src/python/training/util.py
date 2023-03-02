@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+from custom_transforms import ApplyTokenizerd, LoadJSONd, RandomSelectExcerptd
 from mlflow import start_run
 from monai import transforms
 from monai.data import PersistentDataset
@@ -62,6 +63,9 @@ def get_dataloader(
             transforms.ScaleIntensityRanged(keys=["image"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0, clip=True),
             transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
             transforms.ToTensord(keys=["image"]),
+            LoadJSONd(keys=["report"]),
+            RandomSelectExcerptd(keys=["report"], sentence_key="sentences", max_n_sentences=5),
+            ApplyTokenizerd(keys=["report"]),
         ]
     )
     if model_type == "autoencoder":
@@ -81,6 +85,9 @@ def get_dataloader(
                 ),
                 transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
                 transforms.ToTensord(keys=["image"]),
+                LoadJSONd(keys=["report"]),
+                RandomSelectExcerptd(keys=["report"], sentence_key="sentences", max_n_sentences=5),
+                ApplyTokenizerd(keys=["report"]),
             ]
         )
     if model_type == "diffusion":
@@ -100,6 +107,14 @@ def get_dataloader(
                 ),
                 transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
                 transforms.ToTensord(keys=["image"]),
+                LoadJSONd(keys=["report"]),
+                RandomSelectExcerptd(keys=["report"], sentence_key="sentences", max_n_sentences=5),
+                ApplyTokenizerd(keys=["report"]),
+                transforms.RandLambdad(
+                    keys=["report"],
+                    prob=1.0,
+                    func=lambda x: torch.cat((49406 * torch.ones(1, 1), 49407 * torch.ones(1, x.shape[1])), 1).long(),
+                ),  # 49406: BOS token 49407: PAD token
             ]
         )
 
@@ -216,16 +231,16 @@ def log_ldm_sample_unconditioned(
     writer: SummaryWriter,
     step: int,
     device: torch.device,
+    scale_factor: float = 1.0,
 ) -> None:
     latent = torch.randn((1,) + spatial_shape)
     latent = latent.to(device)
 
     for t in tqdm(scheduler.timesteps, ncols=70):
-        with torch.no_grad():
-            noise_pred = model(x=latent, timesteps=torch.asarray((t,)).to(device))
+        noise_pred = model(x=latent, timesteps=torch.asarray((t,)).to(device))
         latent, _ = scheduler.step(noise_pred, t, latent)
 
-    x_hat = stage1.model.decode(latent.detach())
+    x_hat = stage1.model.decode(latent / scale_factor)
     img_0 = np.clip(a=x_hat[0, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
     fig = plt.figure(dpi=300)
     plt.imshow(img_0, cmap="gray")

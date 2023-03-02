@@ -29,14 +29,13 @@ def main(args):
             {
                 "image": f"/data/rawdata/files/p{str(int(row['subject_id']))[:2]}/p{str(int(row['subject_id']))}/"
                 f"s{int(row['study_id'])}/{row['dicom_id']}.jpg",
-                "report": f"/data/rawdata/files/p{str(int(row['subject_id']))[:2]}/p{str(int(row['subject_id']))}/"
-                f"s{int(row['study_id'])}.txt",
+                "report": f"/data/derivatives/report_sentences/s{int(row['study_id'])}.json",
             }
         )
 
-    # transform data list to dataframe and shuffle
+    # transform data list to dataframe and shuffle it using a random seed
     data_df = pd.DataFrame(data_list)
-    data_df = data_df.sample(frac=1).reset_index(drop=True)
+    data_df = data_df.sample(frac=1, random_state=42).reset_index(drop=True)
 
     # split in train, validation and test data lists. The total number of PA images in data_df is 96161.
     train_data_list = data_df[:90000]

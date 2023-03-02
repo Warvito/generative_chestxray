@@ -405,7 +405,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--reports_path", required=True, help=("Path to file with radiology reports," " e.g. /data/mimic-cxr/files")
+        "--reports_path", required=True, help=("Path to file with radiology reports, e.g. /data/mimic-cxr/files")
     )
     parser.add_argument("--output_path", required=True, help="Path to output CSV files.")
     parser.add_argument("--no_split", action="store_true", help="Do not output batched CSV files.")
