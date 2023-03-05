@@ -59,7 +59,8 @@ def get_dataloader(
                     None,
                 ],
             ),
-            transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),
+            transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),  # Fix flipped image read
+            transforms.Flipd(keys=["image"], spatial_axis=1),  # Fix flipped image read
             transforms.ScaleIntensityRanged(keys=["image"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0, clip=True),
             transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
             transforms.ToTensord(keys=["image"]),
@@ -79,11 +80,21 @@ def get_dataloader(
                         None,
                     ],
                 ),
-                transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),
+                transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),  # Fix flipped image read
+                transforms.Flipd(keys=["image"], spatial_axis=1),  # Fix flipped image read
                 transforms.ScaleIntensityRanged(
                     keys=["image"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0, clip=True
                 ),
                 transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
+                transforms.RandAffined(
+                    keys=["image"],
+                    rotate_range=(-np.pi / 36, np.pi / 36),
+                    translate_range=(-2, 2),
+                    scale_range=(-0.01, 0.01),
+                    spatial_size=[512, 512],
+                    prob=0.5,
+                ),
+                transforms.RandFlipd(keys=["image"], spatial_axis=1, prob=0.5),
                 transforms.ToTensord(keys=["image"]),
                 LoadJSONd(keys=["report"]),
                 RandomSelectExcerptd(keys=["report"], sentence_key="sentences", max_n_sentences=5),
@@ -101,11 +112,20 @@ def get_dataloader(
                         None,
                     ],
                 ),
-                transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),
+                transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),  # Fix flipped image read
+                transforms.Flipd(keys=["image"], spatial_axis=1),  # Fix flipped image read
                 transforms.ScaleIntensityRanged(
                     keys=["image"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0, clip=True
                 ),
                 transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
+                transforms.RandAffined(
+                    keys=["image"],
+                    rotate_range=(-np.pi / 36, np.pi / 36),
+                    translate_range=(-2, 2),
+                    scale_range=(-0.01, 0.01),
+                    spatial_size=[512, 512],
+                    prob=0.10,
+                ),
                 transforms.ToTensord(keys=["image"]),
                 LoadJSONd(keys=["report"]),
                 RandomSelectExcerptd(keys=["report"], sentence_key="sentences", max_n_sentences=5),
