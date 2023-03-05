@@ -48,6 +48,7 @@ def train_aekl(
     adv_weight: float,
     perceptual_weight: float,
     kl_weight: float,
+    adv_start: int,
 ) -> float:
     scaler_g = GradScaler()
     scaler_d = GradScaler()
@@ -63,7 +64,7 @@ def train_aekl(
         step=len(train_loader) * start_epoch,
         writer=writer_val,
         kl_weight=kl_weight,
-        adv_weight=adv_weight,
+        adv_weight=adv_weight if start_epoch >= adv_start else 0.0,
         perceptual_weight=perceptual_weight,
     )
     print(f"epoch {start_epoch} val loss: {val_loss:.4f}")
@@ -79,7 +80,7 @@ def train_aekl(
             epoch=epoch,
             writer=writer_train,
             kl_weight=kl_weight,
-            adv_weight=adv_weight,
+            adv_weight=adv_weight if epoch >= adv_start else 0.0,
             perceptual_weight=perceptual_weight,
             scaler_g=scaler_g,
             scaler_d=scaler_d,
@@ -95,7 +96,7 @@ def train_aekl(
                 step=len(train_loader) * epoch,
                 writer=writer_val,
                 kl_weight=kl_weight,
-                adv_weight=adv_weight,
+                adv_weight=adv_weight if epoch >= adv_start else 0.0,
                 perceptual_weight=perceptual_weight,
             )
             print(f"epoch {epoch + 1} val loss: {val_loss:.4f}")

@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument("--config_file", help="Location of file with validation ids.")
     parser.add_argument("--batch_size", type=int, default=256, help="Training batch size.")
     parser.add_argument("--n_epochs", type=int, default=25, help="Number of epochs to train.")
+    parser.add_argument("--adv_start", type=int, default=25, help="Epoch when the adversarial training starts.")
     parser.add_argument("--eval_freq", type=int, default=10, help="Number of epochs to between evaluations.")
     parser.add_argument("--num_workers", type=int, default=8, help="Number of loader workers")
     parser.add_argument("--experiment", help="Mlflow experiment name.")
@@ -128,6 +129,7 @@ def main(args):
         kl_weight=config["stage1"]["kl_weight"],
         adv_weight=config["stage1"]["adv_weight"],
         perceptual_weight=config["stage1"]["perceptual_weight"],
+        adv_start=args.adv_start,
     )
 
     log_mlflow(

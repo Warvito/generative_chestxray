@@ -18,3 +18,4 @@ TODO LIST:
 - [ ] Test with Microsoft and Stable Diffusion text part.
 - [ ] Add synthetic sentences based on other source of information
 - [ ] Maybe use LLM to augment the reports
+- [ ] Add warmup time for the diffusion model
