@@ -4,6 +4,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from generative.losses.adversarial_loss import PatchAdversarialLoss
 from pynvml.smi import nvidia_smi
 from tensorboardX import SummaryWriter
 from torch.cuda.amp import GradScaler, autocast
@@ -143,6 +144,8 @@ def train_epoch_aekl(
     model.train()
     discriminator.train()
 
+    adv_loss = PatchAdversarialLoss(criterion="least_squares", no_activation_leastsq=True)
+
     pbar = tqdm(enumerate(loader), total=len(loader))
     for step, x in pbar:
         images = x["image"].to(device)
@@ -157,9 +160,11 @@ def train_epoch_aekl(
             kl_loss = 0.5 * torch.sum(z_mu.pow(2) + z_sigma.pow(2) - torch.log(z_sigma.pow(2)) - 1, dim=[1, 2, 3])
             kl_loss = torch.sum(kl_loss) / kl_loss.shape[0]
 
-            logits_fake = discriminator(reconstruction.contiguous().float())[-1]
-            real_label = torch.ones_like(logits_fake, device=logits_fake.device)
-            generator_loss = F.mse_loss(logits_fake, real_label)
+            if adv_weight > 0:
+                logits_fake = discriminator(reconstruction.contiguous().float())[-1]
+                generator_loss = adv_loss(logits_fake, target_is_real=True, for_discriminator=False)
+            else:
+                generator_loss = torch.tensor([0.0]).to(device)
 
             loss = l1_loss + kl_weight * kl_loss + perceptual_weight * p_loss + adv_weight * generator_loss
 
@@ -184,25 +189,26 @@ def train_epoch_aekl(
         scaler_g.update()
 
         # DISCRIMINATOR
-        optimizer_d.zero_grad(set_to_none=True)
+        if adv_weight > 0:
+            optimizer_d.zero_grad(set_to_none=True)
 
-        with autocast(enabled=True):
-            logits_fake = discriminator(reconstruction.contiguous().detach())[-1]
-            fake_label = torch.zeros_like(logits_fake, device=logits_fake.device)
-            loss_d_fake = F.mse_loss(logits_fake, fake_label)
-            logits_real = discriminator(images.contiguous().detach())[-1]
-            real_label = torch.ones_like(logits_real, device=logits_real.device)
-            loss_d_real = F.mse_loss(logits_real, real_label)
-            discriminator_loss = (loss_d_fake + loss_d_real) * 0.5
+            with autocast(enabled=True):
+                logits_fake = discriminator(reconstruction.contiguous().detach())[-1]
+                loss_d_fake = adv_loss(logits_fake, target_is_real=False, for_discriminator=True)
+                logits_real = discriminator(images.contiguous().detach())[-1]
+                loss_d_real = adv_loss(logits_real, target_is_real=True, for_discriminator=True)
+                discriminator_loss = (loss_d_fake + loss_d_real) * 0.5
 
-            d_loss = adv_weight * discriminator_loss
-            d_loss = d_loss.mean()
+                d_loss = adv_weight * discriminator_loss
+                d_loss = d_loss.mean()
 
-        scaler_d.scale(d_loss).backward()
-        scaler_d.unscale_(optimizer_d)
-        torch.nn.utils.clip_grad_norm_(discriminator.parameters(), 1)
-        scaler_d.step(optimizer_d)
-        scaler_d.update()
+            scaler_d.scale(d_loss).backward()
+            scaler_d.unscale_(optimizer_d)
+            torch.nn.utils.clip_grad_norm_(discriminator.parameters(), 1)
+            scaler_d.step(optimizer_d)
+            scaler_d.update()
+        else:
+            discriminator_loss = torch.tensor([0.0]).to(device)
 
         losses["d_loss"] = discriminator_loss
 
@@ -241,6 +247,7 @@ def eval_aekl(
     model.eval()
     discriminator.eval()
 
+    adv_loss = PatchAdversarialLoss(criterion="least_squares", no_activation_leastsq=True)
     total_losses = OrderedDict()
     for x in loader:
         images = x["image"].to(device)
@@ -250,20 +257,24 @@ def eval_aekl(
             reconstruction, z_mu, z_sigma = model(x=images)
             l1_loss = F.l1_loss(reconstruction.float(), images.float())
             p_loss = perceptual_loss(reconstruction.float(), images.float())
-            kl_loss = 0.5 * torch.sum(z_mu.pow(2) + z_sigma.pow(2) - torch.log(z_sigma.pow(2)) - 1, dim=[1, 2, 3])
+            kl_loss = 0.5 * torch.sum(z_mu.pow(2) + z_sigma.pow(2) - torch.log(z_sigma.pow(2)) - 1, dim=[1, 2, 3, 4])
             kl_loss = torch.sum(kl_loss) / kl_loss.shape[0]
-            logits_fake = discriminator(reconstruction.contiguous().float())[-1]
-            real_label = torch.ones_like(logits_fake, device=logits_fake.device)
-            generator_loss = F.mse_loss(logits_fake, real_label)
+
+            if adv_weight > 0:
+                logits_fake = discriminator(reconstruction.contiguous().float())[-1]
+                generator_loss = adv_loss(logits_fake, target_is_real=True, for_discriminator=False)
+            else:
+                generator_loss = torch.tensor([0.0]).to(device)
 
             # DISCRIMINATOR
-            logits_fake = discriminator(reconstruction.contiguous().detach())[-1]
-            fake_label = torch.zeros_like(logits_fake, device=logits_fake.device)
-            loss_d_fake = F.mse_loss(logits_fake, fake_label)
-            logits_real = discriminator(images.contiguous().detach())[-1]
-            real_label = torch.ones_like(logits_real, device=logits_real.device)
-            loss_d_real = F.mse_loss(logits_real, real_label)
-            discriminator_loss = (loss_d_fake + loss_d_real) * 0.5
+            if adv_weight > 0:
+                logits_fake = discriminator(reconstruction.contiguous().detach())[-1]
+                loss_d_fake = adv_loss(logits_fake, target_is_real=False, for_discriminator=True)
+                logits_real = discriminator(images.contiguous().detach())[-1]
+                loss_d_real = adv_loss(logits_real, target_is_real=True, for_discriminator=True)
+                discriminator_loss = (loss_d_fake + loss_d_real) * 0.5
+            else:
+                discriminator_loss = torch.tensor([0.0]).to(device)
 
             loss = l1_loss + kl_weight * kl_loss + perceptual_weight * p_loss + adv_weight * generator_loss
 
