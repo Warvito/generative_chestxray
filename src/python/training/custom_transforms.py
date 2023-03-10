@@ -7,13 +7,10 @@ from monai.data.image_reader import ImageReader
 from monai.transforms.transform import MapTransform, Randomizable, Transform
 from transformers import CLIPTokenizer
 
-# from typing import Callable, Hashable, Mapping, Optional, Sequence
-# import torch
-# from monai.transforms.transform import RandomizableTransform
-# from monai.utils import ensure_tuple_rep
-
 
 class LoadJSON(Transform):
+    """Transformation to load a JSON file."""
+
     def __call__(self, filename: PathLike):
         with open(str(filename)) as json_file:
             data = json.load(json_file)
@@ -41,6 +38,12 @@ class LoadJSONd(MapTransform):
 
 
 class RandomSelectExcerptd(Randomizable, MapTransform):
+    """
+    Transform to randomly select a number of sentences from a list of sentences and concatenate them into a single
+        string.
+
+    """
+
     def __init__(
         self,
         keys: KeysCollection,
@@ -54,7 +57,7 @@ class RandomSelectExcerptd(Randomizable, MapTransform):
         self._selected_sentence_list = [0]
         self._n_sentences = 0
 
-    def randomize(self, list_of_sentences_len) -> None:
+    def randomize(self, list_of_sentences_len: int) -> None:
         n_possible_sentences = min(list_of_sentences_len, self.max_n_sentences)
         if n_possible_sentences > 1:
             self._n_sentences = np.random.randint(1, n_possible_sentences)
@@ -80,19 +83,20 @@ class RandomSelectExcerptd(Randomizable, MapTransform):
 
 
 class ApplyTokenizer(Transform):
+    """Transformation to apply the CLIP tokenizer."""
+
     def __init__(self) -> None:
         self.tokenizer = CLIPTokenizer.from_pretrained("stabilityai/stable-diffusion-2-1-base", subfolder="tokenizer")
 
-    def __call__(self, tokenized_sentence):
-        text_inputs = self.tokenizer(
-            tokenized_sentence,
+    def __call__(self, text_input: str):
+        tokenized_sentence = self.tokenizer(
+            text_input,
             padding="max_length",
             max_length=self.tokenizer.model_max_length,
             truncation=True,
             return_tensors="pt",
         )
-        text_input_ids = text_inputs.input_ids
-        return text_input_ids
+        return tokenized_sentence.input_ids
 
 
 class ApplyTokenizerd(MapTransform):
@@ -113,72 +117,3 @@ class ApplyTokenizerd(MapTransform):
             d[key] = data
 
         return d
-
-
-#
-# class Lambda(Transform):
-#     def __init__(self, func: Callable | None = None) -> None:
-#         if func is not None and not callable(func):
-#             raise TypeError(f"func must be None or callable but is {type(func).__name__}.")
-#         self.func = func
-#
-#     def __call__(self, img, func):
-#         fn = func if func is not None else self.func
-#         if not callable(fn):
-#             raise TypeError(f"func must be None or callable but is {type(fn).__name__}.")
-#         out = fn(img)
-#         return out
-#
-#
-# class Lambdad(MapTransform):
-#     def __init__(
-#         self,
-#         keys: KeysCollection,
-#         func: Sequence[Callable] | Callable,
-#         overwrite: Sequence[bool] | bool | Sequence[str] | str = True,
-#         allow_missing_keys: bool = False,
-#     ) -> None:
-#         super().__init__(keys, allow_missing_keys)
-#         self.func = ensure_tuple_rep(func, len(self.keys))
-#         self.overwrite = ensure_tuple_rep(overwrite, len(self.keys))
-#         self._lambd = Lambda()
-#
-#     def __call__(self, data: Mapping[Hashable, torch.Tensor]) -> dict[Hashable, torch.Tensor]:
-#         d = dict(data)
-#         for key, func, overwrite in self.key_iterator(d, self.func, self.overwrite):
-#             ret = self._lambd(img=d[key], func=func)
-#             if overwrite and isinstance(overwrite, bool):
-#                 d[key] = ret
-#             elif isinstance(overwrite, str):
-#                 d[overwrite] = ret
-#         return d
-#
-#
-# class RandLambdad(Lambdad, RandomizableTransform):
-#     def __init__(
-#         self,
-#         keys: KeysCollection,
-#         func: Sequence[Callable] | Callable,
-#         overwrite: Sequence[bool] | bool = True,
-#         prob: float = 1.0,
-#         allow_missing_keys: bool = False,
-#     ) -> None:
-#         Lambdad.__init__(
-#             self=self,
-#             keys=keys,
-#             func=func,
-#             overwrite=overwrite,
-#             allow_missing_keys=allow_missing_keys,
-#         )
-#         RandomizableTransform.__init__(self=self, prob=prob, do_transform=True)
-#
-#     def __call__(self, data):
-#         self.randomize(data)
-#         d = dict(data)
-#         for key, func, overwrite in self.key_iterator(d, self.func, self.overwrite):
-#             ret = d[key]
-#             if self._do_transform:
-#                 ret = self._lambd(ret, func=func)
-#             if overwrite:
-#                 d[key] = ret
-#         return d
