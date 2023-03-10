@@ -1,9 +1,9 @@
 seed=42
 run_dir="aekl_v0"
-training_ids="/project/outputs/ids/train_ids.tsv"
-validation_ids="/project/outputs/ids/val_ids.tsv"
+training_ids="/project/outputs/ids/train.tsv"
+validation_ids="/project/outputs/ids/validation.tsv"
 config_file="/project/configs/stage1/aekl_v0.yaml"
-batch_size=48
+batch_size=96
 n_epochs=100
 adv_start=5
 eval_freq=3
