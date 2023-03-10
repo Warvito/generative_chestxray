@@ -103,3 +103,13 @@ with torch.no_grad():
 
 plt.imshow(sample.cpu()[0, 0, :, :], cmap="gray", vmin=0, vmax=1)
 plt.show()
+
+
+torch.save(
+    diffusion.state_dict(),
+    "/media/walter/Storage/Projects/GenerativeModels/model-zoo/models/cxr_image_synthesis_latent_diffusion_model/models/diffusion_model.pth",
+)
+torch.save(
+    stage1.state_dict(),
+    "/media/walter/Storage/Projects/GenerativeModels/model-zoo/models/cxr_image_synthesis_latent_diffusion_model/models/autoencoder.pth",
+)

@@ -4,26 +4,11 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pynvml.smi import nvidia_smi
 from tensorboardX import SummaryWriter
 from torch.cuda.amp import GradScaler, autocast
 from tqdm import tqdm
+from training_functions import get_lr, print_gpu_memory_report
 from util import log_reconstructions
-
-
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group["lr"]
-
-
-def print_gpu_memory_report():
-    if torch.cuda.is_available():
-        nvsmi = nvidia_smi.getInstance()
-        data = nvsmi.DeviceQuery("memory.used, memory.total, utilization.gpu")["gpu"]
-        print("Memory report")
-        for i, data_by_rank in enumerate(data):
-            mem_report = data_by_rank["fb_memory_usage"]
-            print(f"gpu:{i} mem(%) {int(mem_report['used'] * 100.0 / mem_report['total'])}")
 
 
 def hinge_d_loss(logits_real, logits_fake):

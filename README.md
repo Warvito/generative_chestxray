@@ -19,6 +19,7 @@ TODO LIST:
 - [ ] Add synthetic sentences based on other source of information
 - [ ] Maybe use LLM to augment the reports
 - [ ] Add warmup time for the diffusion model
+- [ ] Include images from ChestX-ray14 https://nihcc.app.box.com/v/ChestXray-NIHCC/folder/36938765345
 
 
 ## C1
