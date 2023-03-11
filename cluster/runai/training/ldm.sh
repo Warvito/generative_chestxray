@@ -9,6 +9,7 @@ batch_size=256
 n_epochs=300
 eval_freq=3
 num_workers=64
+extended_report=1
 experiment="LDM"
 
 runai submit \
@@ -36,4 +37,5 @@ runai submit \
       n_epochs=${n_epochs} \
       eval_freq=${eval_freq} \
       num_workers=${num_workers} \
+      extended_report=${extended_report} \
       experiment=${experiment}

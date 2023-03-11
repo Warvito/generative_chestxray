@@ -34,6 +34,7 @@ def parse_args():
     parser.add_argument("--n_epochs", type=int, default=25, help="Number of epochs to train.")
     parser.add_argument("--eval_freq", type=int, default=10, help="Number of epochs to between evaluations.")
     parser.add_argument("--num_workers", type=int, default=8, help="Number of loader workers")
+    parser.add_argument("--extended_report", type=int, default=1, help="Define if use extended reports")
     parser.add_argument("--experiment", help="Mlflow experiment name.")
 
     args = parser.parse_args()
@@ -87,6 +88,7 @@ def main(args):
         validation_ids=args.validation_ids,
         num_workers=args.num_workers,
         model_type="diffusion",
+        extended_report=bool(args.extended_report),
     )
 
     # Load VQVAE to produce the encoded samples

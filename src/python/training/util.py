@@ -24,16 +24,20 @@ from tqdm import tqdm
 # ----------------------------------------------------------------------------------------------------------------------
 def get_datalist(
     ids_path: str,
+    extended_report: bool = False,
 ):
     """Get data dicts for data loaders."""
     df = pd.read_csv(ids_path, sep="\t")
 
     data_dicts = []
     for index, row in df.iterrows():
+        report_path = row["report"]
+        if extended_report:
+            report_path = report_path.replace("report_sentences", "report_sentences_extended")
         data_dicts.append(
             {
                 "image": f"{row['image']}",
-                "report": f"{row['report']}",
+                "report": report_path,
             }
         )
 
@@ -48,6 +52,7 @@ def get_dataloader(
     validation_ids: str,
     num_workers: int = 8,
     model_type: str = "autoencoder",
+    extended_report: bool = False,
 ):
     # Define transformations
     val_transforms = transforms.Compose(
@@ -141,7 +146,7 @@ def get_dataloader(
             ]
         )
 
-    train_dicts = get_datalist(ids_path=training_ids)
+    train_dicts = get_datalist(ids_path=training_ids, extended_report=extended_report)
     train_ds = PersistentDataset(data=train_dicts, transform=train_transforms, cache_dir=str(cache_dir))
     train_loader = DataLoader(
         train_ds,
@@ -153,7 +158,7 @@ def get_dataloader(
         persistent_workers=True,
     )
 
-    val_dicts = get_datalist(ids_path=validation_ids)
+    val_dicts = get_datalist(ids_path=validation_ids, extended_report=extended_report)
     val_ds = PersistentDataset(data=val_dicts, transform=val_transforms, cache_dir=str(cache_dir))
     val_loader = DataLoader(
         val_ds,
