@@ -1,3 +1,4 @@
+""" Training functions for the different models. """
 from collections import OrderedDict
 from pathlib import Path
 

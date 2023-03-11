@@ -1,3 +1,4 @@
+""" Training script for the autoencoder with KL regulization. """
 import argparse
 import warnings
 from pathlib import Path

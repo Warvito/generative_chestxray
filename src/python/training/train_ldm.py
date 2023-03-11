@@ -1,3 +1,4 @@
+""" Training script for the diffusion model in the latent space of the pretraine AEKL model. """
 import argparse
 import warnings
 from pathlib import Path

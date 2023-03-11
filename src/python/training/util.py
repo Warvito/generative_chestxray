@@ -1,3 +1,4 @@
+"""Utility functions for training."""
 from pathlib import Path
 from typing import Tuple, Union
 

@@ -1,3 +1,7 @@
+"""Script to create json files with sentences from reports.
+
+In order to run this script, it is necessary to run `python -m spacy download en_core_web_sm` first.
+"""
 import argparse
 import json
 import re
