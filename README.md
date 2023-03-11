@@ -1,5 +1,11 @@
 # Latent Diffusion Models for Chest X-Ray Generation using MONAI Generative Models
 
+Script to train a Latent Diffusion Model based on Pinaya et al. "Brain imaging generation with latent diffusion models."
+(https://arxiv.org/abs/2209.07162) on the MIMIC-CXR dataset.
+
+
+## Instructions
+
 After downloading the JPG images from [MIMIC-CXR-JPG](https://physionet.org/content/mimic-cxr-jpg/2.0.0/) and the
 associated free-text reports from [MIMIC-CXR Database](https://physionet.org/content/mimic-cxr/2.0.0/), you need to
 preprocess the data. The following is the list of execution for preprocessing:
@@ -9,13 +15,15 @@ preprocess the data. The following is the list of execution for preprocessing:
 4) preprocessing/create_sentences_files.py - Create file with sentences for each report.
 
 
-TODO LIST:
+## Released models
+Version 0.1 - (Mar 9, 2023) Initial release
+Version 0.2 - () Model with flipped images fixed. Trained on 8 A100 GPUs in about 2 days.
 
+TODO LIST:
 - [ ] Add original implementation from adversarial training.
-- [ ] Test with Microsoft and Stable Diffusion text part.
+- [ ] Test with Microsoft's text encoder.
 - [ ] Add synthetic sentences based on other source of information
-- [ ] Maybe use LLM to augment the reports
 - [ ] Add warmup time for the diffusion model
-- [ ] Improve lr scheduler
+- [ ] Improve lr schedulers
 - [ ] Use EMA in the diffusion model training
-- [ ] Include images from ChestX-ray14 https://nihcc.app.box.com/v/ChestXray-NIHCC/folder/36938765345
+- [ ] Include images from other datasets e.g. [ChestX-ray14](https://nihcc.app.box.com/v/ChestXray-NIHCC/folder/36938765345)
