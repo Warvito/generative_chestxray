@@ -16,13 +16,6 @@ TODO LIST:
 - [ ] Add synthetic sentences based on other source of information
 - [ ] Maybe use LLM to augment the reports
 - [ ] Add warmup time for the diffusion model
+- [ ] Improve lr scheduler
+- [ ] Use EMA in the diffusion model training
 - [ ] Include images from ChestX-ray14 https://nihcc.app.box.com/v/ChestXray-NIHCC/folder/36938765345
-
-
-## C1
-### Uploading dataset
-To create dataset for C1, run the following command:
-
-```
-ngc dataset upload -y --desc "MIMIC dataset with dimension 512x512." --source /nfs/home/wds20/datasets/MIMIC-CXR-JPG_v2.0.0 --threads 12 scotheart
-```
