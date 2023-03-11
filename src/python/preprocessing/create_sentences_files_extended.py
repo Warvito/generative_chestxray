@@ -120,16 +120,17 @@ def main(args):
 
         # Extend existing sentences with synthetic sentences using Chexpert labels
         selected_chexpert = chexpert_df[chexpert_df["study_id"] == row["study_id"]]
-        for column in chexpert_columns:
-            if selected_chexpert[column].iloc[0] == 1.0:
-                data_dict["sentences"].extend(create_synthetic_sentences(column))
+        if len(selected_chexpert) == 1:
+            for column in chexpert_columns:
+                if selected_chexpert[column].iloc[0] == 1.0:
+                    data_dict["sentences"].extend(create_synthetic_sentences(column))
 
-                # Check if there is an adjective modifying the entity
-                if doc is not None:
-                    for token in doc:
-                        if token.head.text == column and token.dep_ == "amod":
-                            if token.text in ["moderate", "severe", "mild", "small", "large", "big"]:
-                                data_dict["sentences"].extend(create_synthetic_sentences(column, token.text))
+                    # Check if there is an adjective modifying the entity
+                    if doc is not None:
+                        for token in doc:
+                            if token.head.text == column and token.dep_ == "amod":
+                                if token.text in ["moderate", "severe", "mild", "small", "large", "big"]:
+                                    data_dict["sentences"].extend(create_synthetic_sentences(column, token.text))
 
         with open(output_filename, "w") as f:
             json.dump(data_dict, f, indent=4)
