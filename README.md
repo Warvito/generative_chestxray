@@ -6,25 +6,38 @@ Script to train a Latent Diffusion Model based on [Pinaya et al. "Brain imaging 
 
 
 ## Instructions
-
+### Preprocessing
 After downloading the JPG images from [MIMIC-CXR-JPG](https://physionet.org/content/mimic-cxr-jpg/2.0.0/) and the
 associated free-text reports from [MIMIC-CXR Database](https://physionet.org/content/mimic-cxr/2.0.0/), you need to
 preprocess the data. The following is the list of execution for preprocessing:
-1) preprocessing/organise.py - Resizes dataset to 512 pixels in the smaller dimension
-2) preprocessing/create_ids.py - Create files with datalist for training, validation and test using only "PA" views
-3) preprocessing/create_section_files.py - Create file with text sections for each report.
-4) preprocessing/create_sentences_files.py - Create file with sentences for each report.
+
+1) $PROJECT_ROOT/src/python/preprocessing/organise.py - Resizes dataset to 512 pixels in the smaller dimension
+2) $PROJECT_ROOT/src/python/preprocessing/create_ids.py - Create files with datalist for training, validation and test using only "PA" views
+3) $PROJECT_ROOT/src/python/preprocessing/create_section_files.py - Create file with text sections for each report.
+4) $PROJECT_ROOT/src/python/preprocessing/create_sentences_files.py - Create file with sentences for each report.
+
+### Training
+After preprocessing, you can train the model using similar commands as in the following files (note: This project was
+executed on a cluster with RunAI platform):
+
+1) $PROJECT_ROOT/cluster/runai/training/stage1.sh
+2) $PROJECT_ROOT/cluster/runai/training/ldm.sh
+
+These files indicates which parameters and configuration file was used for training, as well how the host directories
+were mounted in the used Docker container.
+
+### Inference and evaluation
+Finally, we converted the mlflow model to .pth files (for easly loading in MONAI), sampled images from the diffusion
+model, and evaluated the model. The following is the list of execution for inference and evaluation:
+
+1) $PROJECT_ROOT/src/python/testing/convert_mlflow_to_pytorch.py - Convert mlflow model to .pth files
+2) $PROJECT_ROOT/src/python/testing/sample_images.py - Sample images from the diffusion model
+3) $PROJECT_ROOT/src/python/testing/compute_fid.py - Compute FID score between generated images and real images
+4) $PROJECT_ROOT/src/python/testing/compute_msssim.py - Measure the mean structural similarity index between images in
+order to measure the diversity between them, as well between real and reconstructed images (created by the AutoencoderKL
+).
 
 
 ## Released models
 - Version 0.1 - (Mar 9, 2023) Initial release
 - Version 0.2 - () Model with flipped images fixed. Trained on 8 A100 GPUs in about three days.
-
-TODO LIST:
-- [ ] Add original implementation of adversarial training.
-- [ ] Test with Microsoft's text encoder.
-- [X] Add synthetic sentences based on other sources of information
-- [ ] Add warmup time for the diffusion model
-- [ ] Improve lr schedulers
-- [ ] Use EMA in the diffusion model training
-- [ ] Include images from other datasets, e.g. [ChestX-ray14](https://nihcc.app.box.com/v/ChestXray-NIHCC/folder/36938765345)
