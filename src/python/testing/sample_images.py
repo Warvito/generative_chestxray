@@ -85,7 +85,7 @@ def main(args):
     prompt_embeds = text_encoder(text_input_ids.squeeze(1))
     prompt_embeds = prompt_embeds[0].to(device)
 
-    for i in range(args.start, args.stop):
+    for i in range(args.start_seed, args.stop_seed):
         set_determinism(seed=i)
         noise = torch.randn((1, config["ldm"]["params"]["in_channels"], args.x_size, args.y_size)).to(device)
 
