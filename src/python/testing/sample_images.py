@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument("--diffusion_config_file_path", help="Path to the .pth model from the diffusion model.")
     parser.add_argument("--start_seed", type=int, help="Path to the MLFlow artifact of the stage1.")
     parser.add_argument("--stop_seed", type=int, help="Path to the MLFlow artifact of the stage1.")
-    parser.add_argument("--prompt", nargs="+", help="Path to the MLFlow artifact of the stage1.")
+    parser.add_argument("--prompt", help="Path to the MLFlow artifact of the stage1.")
     parser.add_argument("--guidance_scale", type=float, default=7.0, help="")
     parser.add_argument("--x_size", type=int, default=64, help="Latent space x size.")
     parser.add_argument("--y_size", type=int, default=64, help="Latent space y size.")
