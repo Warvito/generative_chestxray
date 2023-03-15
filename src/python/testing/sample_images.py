@@ -72,7 +72,7 @@ def main(args):
     tokenizer = CLIPTokenizer.from_pretrained("stabilityai/stable-diffusion-2-1-base", subfolder="tokenizer")
     text_encoder = CLIPTextModel.from_pretrained("stabilityai/stable-diffusion-2-1-base", subfolder="text_encoder")
 
-    prompt = ["", args.prompt]
+    prompt = ["", args.prompt.replace("_", " ")]
     text_inputs = tokenizer(
         prompt,
         padding="max_length",

@@ -1,11 +1,11 @@
-output_dir="/project/src/outputs/samples/"
-stage1_path="/project/src/outputs/models/v0.2/autoencoder.pth"
-diffusion_path="/project/src/outputs/models/v0.2/diffusion_model.pth"
+output_dir="/project/outputs/samples/"
+stage1_path="/project/outputs/models/v0.2/autoencoder.pth"
+diffusion_path="/project/outputs/models/v0.2/diffusion_model.pth"
 stage1_config_file_path="/project/configs/stage1/aekl_v0.yaml"
 diffusion_config_file_path="/project/configs/ldm/ldm_v0.yaml"
 start_seed=0
 stop_seed=128
-prompt="There is an atelectasis."
+prompt="There_is_an_atelectasis."
 guidance_scale=7.0
 x_size=64
 y_size=64
@@ -31,7 +31,7 @@ runai submit \
       --diffusion_config_file_path=${diffusion_config_file_path} \
       --start_seed=${start_seed} \
       --stop_seed=${stop_seed} \
-      --prompt="${prompt}" \
+      --prompt=${prompt} \
       --guidance_scale=${guidance_scale} \
       --x_size=${x_size} \
       --y_size=${y_size} \
