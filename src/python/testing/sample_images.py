@@ -104,7 +104,7 @@ def main(args):
         with torch.no_grad():
             sample = stage1.decode_stage_2_outputs(noise / args.scale_factor)
 
-        sample = sample.cpu().numpy()
+        sample = np.clip(sample.cpu().numpy(), 0, 1)
         sample = (sample * 255).astype(np.uint8)
         im = Image.fromarray(sample[0, 0])
         im.save(output_dir / f"sample_{i}.jpg")
