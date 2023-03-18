@@ -6,10 +6,10 @@ stage1_uri="/project/mlruns/398344666374521908/0fde76e3e71b4ed4a92aea593c73c3db/
 config_file="/project/configs/ldm/ldm_v0.yaml"
 scale_factor=0.3
 batch_size=256
-n_epochs=300
-eval_freq=3
+n_epochs=500
+eval_freq=10
 num_workers=64
-extended_report=1
+extended_report=0
 experiment="LDM"
 
 runai submit \
