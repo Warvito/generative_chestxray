@@ -1,4 +1,5 @@
 """Utility functions for testing."""
+from __future__ import annotations
 
 import pandas as pd
 from monai import transforms
