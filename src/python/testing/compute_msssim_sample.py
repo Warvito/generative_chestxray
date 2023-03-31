@@ -61,7 +61,7 @@ def main(args):
         eval_ds,
         batch_size=1,
         shuffle=False,
-        num_workers=8,
+        num_workers=args.num_workers,
     )
 
     eval_ds_2 = CacheDataset(
@@ -72,7 +72,7 @@ def main(args):
         eval_ds_2,
         batch_size=1,
         shuffle=False,
-        num_workers=8,
+        num_workers=args.num_workers,
     )
 
     device = torch.device("cuda")
