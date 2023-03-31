@@ -68,7 +68,7 @@ def main(args):
         ms_ssim_list.append(ms_ssim(x, x_recon))
         filenames.extend(batch["image_meta_dict"]["filename_or_obj"])
 
-    ms_ssim_list = torch.cat(ms_ssim_list, axis=0)
+    ms_ssim_list = torch.cat(ms_ssim_list, dim=0)
 
     prediction_df = pd.DataFrame({"filename": filenames, "ms_ssim": ms_ssim_list.cpu()[:, 0]})
     prediction_df.to_csv(output_dir / "ms_ssim_reconstruction.tsv", index=False, sep="\t")

@@ -58,7 +58,7 @@ def main(args):
             ms_ssim_list.append(ms_ssim(img.to(device), img2.to(device)).item())
         pbar.update()
 
-    ms_ssim_list = torch.cat(ms_ssim_list, axis=0)
+    ms_ssim_list = torch.cat(ms_ssim_list, dim=0)
 
     print(f"Mean MS-SSIM: {ms_ssim_list.mean():.6f}")
 
