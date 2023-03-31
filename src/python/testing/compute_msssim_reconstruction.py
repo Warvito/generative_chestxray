@@ -73,6 +73,8 @@ def main(args):
     prediction_df = pd.DataFrame({"filename": filenames, "ms_ssim": ms_ssim_list.cpu()[:, 0]})
     prediction_df.to_csv(output_dir / "ms_ssim_reconstruction.tsv", index=False, sep="\t")
 
+    print(f"Mean MS-SSIM: {ms_ssim_list.mean():.6f}")
+
 
 if __name__ == "__main__":
     args = parse_args()
