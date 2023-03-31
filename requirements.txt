@@ -8,3 +8,4 @@ gdown
 x-transformers==1.8.1
 spacy
 transformers[torch]
+torchxrayvision==1.0.1
