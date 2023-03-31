@@ -63,7 +63,6 @@ def main(args):
     cache_dir = output_dir / "cached_data_aekl"
     cache_dir.mkdir(exist_ok=True)
 
-    print("Getting data...")
     train_loader, val_loader = get_dataloader(
         cache_dir=cache_dir,
         batch_size=args.batch_size,

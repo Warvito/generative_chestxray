@@ -1,0 +1,28 @@
+output_dir="/project/outputs/metrics/"
+test_ids="/project/outputs/ids/test.tsv"
+config_file="/project/configs/stage1/aekl_v0.yaml"
+stage1_path="/project/outputs/models/v0.2/autoencoder.pth"
+seed=42
+batch_size=96
+num_workers=64
+
+runai submit \
+  --name  mimic-ssim \
+  --image aicregistry:5000/wds20:ldm_mimic \
+  --backoff-limit 0 \
+  --gpu 1 \
+  --cpu 4 \
+  --large-shm \
+  --run-as-user \
+  --host-ipc \
+  --project wds20 \
+  --volume /nfs/home/wds20/projects/generative_mimic/:/project/ \
+  --volume /nfs/home/wds20/datasets/MIMIC-CXR-JPG_v2.0.0/:/data/ \
+  --command -- python3 /project/src/python/training/train_aekl.py \
+      seed=${seed} \
+      output_dir=${output_dir} \
+      test_ids=${test_ids} \
+      stage1_path=${stage1_path} \
+      config_file=${config_file} \
+      batch_size=${batch_size} \
+      num_workers=${num_workers}
