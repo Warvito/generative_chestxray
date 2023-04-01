@@ -7,5 +7,5 @@ RUN addgroup --gid $GROUP_ID $USER
 RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID $USER
 
 RUN  apt-get update \
-  && apt-get install -y zip unzip \
+  && apt-get install -y wget zip unzip \
   && rm -rf /var/lib/apt/lists/*

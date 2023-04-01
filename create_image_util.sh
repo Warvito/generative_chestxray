@@ -4,9 +4,9 @@
 #
 # $ create_docker_image.sh
 set -ex
-TAG=mimic_zipping
+TAG=mimic_util
 
-docker build --network=host --tag "aicregistry:5000/${USER}:${TAG}" -f Dockerfile.zipping . \
+docker build --network=host --tag "aicregistry:5000/${USER}:${TAG}" -f Dockerfile.util . \
   --build-arg USER_ID=$(id -u) \
   --build-arg GROUP_ID=$(id -g) \
   --build-arg USER=${USER}

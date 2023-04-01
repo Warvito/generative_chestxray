@@ -1,6 +1,6 @@
 runai submit \
   --name mimic-download \
-  --image aicregistry:5000/wds20:mimic_download \
+  --image aicregistry:5000/wds20:mimic_util \
   --backoff-limit 0 \
   --gpu 0 \
   --cpu 8 \
