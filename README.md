@@ -48,4 +48,4 @@ to measure the diversity of the reference test set.
 
 ## Released models
 - Version 0.1 - (Mar 9, 2023) Initial release
-- Version 0.2 - () Model with flipped images fixed.
+- Version 0.2 - (Apr 9, 2023) Model with flipped images fixed.
