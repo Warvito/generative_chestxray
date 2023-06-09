@@ -78,6 +78,8 @@ def main(args):
     discriminator = PatchDiscriminator(**config["discriminator"]["params"])
     perceptual_loss = PerceptualLoss(**config["perceptual_network"]["params"])
 
+    model = torch.compile(model)
+
     print(f"Let's use {torch.cuda.device_count()} GPUs!")
     device = torch.device("cuda")
     if torch.cuda.device_count() > 1:
