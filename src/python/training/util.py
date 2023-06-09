@@ -61,9 +61,7 @@ def get_dataloader(
             transforms.EnsureChannelFirstd(keys=["image"]),
             transforms.Lambdad(
                 keys=["image"],
-                func=lambda x: x[0, :, :][
-                    None,
-                ],
+                func=lambda x: x[0, :, :][None],
             ),
             transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),  # Fix flipped image read
             transforms.Flipd(keys=["image"], spatial_axis=1),  # Fix flipped image read
@@ -82,9 +80,7 @@ def get_dataloader(
                 transforms.EnsureChannelFirstd(keys=["image"]),
                 transforms.Lambdad(
                     keys=["image"],
-                    func=lambda x: x[0, :, :][
-                        None,
-                    ],
+                    func=lambda x: x[0, :, :][None],
                 ),
                 transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),  # Fix flipped image read
                 transforms.Flipd(keys=["image"], spatial_axis=1),  # Fix flipped image read
@@ -94,17 +90,18 @@ def get_dataloader(
                 transforms.CenterSpatialCropd(keys=["image"], roi_size=(512, 512)),
                 transforms.RandAffined(
                     keys=["image"],
-                    rotate_range=(-np.pi / 36, np.pi / 36),
-                    translate_range=(-2, 2),
-                    scale_range=(-0.01, 0.01),
+                    rotate_range=(-np.pi / 18, np.pi / 18),
+                    translate_range=(-5, 5),
+                    scale_range=(-0.10, 0.10),
                     spatial_size=[512, 512],
                     prob=0.5,
                 ),
                 transforms.RandFlipd(keys=["image"], spatial_axis=1, prob=0.5),
+                transforms.RandShiftIntensityd(keys=["image"], offsets=0.05, prob=0.1),
+                transforms.RandAdjustContrastd(keys=["image"], gamma=(0.95, 1.05), prob=0.1),
+                transforms.ThresholdIntensityd(keys=["image"], threshold=1, above=False, cval=1.0),
+                transforms.ThresholdIntensityd(keys=["image"], threshold=0, above=True, cval=0),
                 transforms.ToTensord(keys=["image"]),
-                LoadJSONd(keys=["report"]),
-                RandomSelectExcerptd(keys=["report"], sentence_key="sentences", max_n_sentences=5),
-                ApplyTokenizerd(keys=["report"]),
             ]
         )
     if model_type == "diffusion":
@@ -114,9 +111,7 @@ def get_dataloader(
                 transforms.EnsureChannelFirstd(keys=["image"]),
                 transforms.Lambdad(
                     keys=["image"],
-                    func=lambda x: x[0, :, :][
-                        None,
-                    ],
+                    func=lambda x: x[0, :, :][None],
                 ),
                 transforms.Rotate90d(keys=["image"], k=-1, spatial_axes=(0, 1)),  # Fix flipped image read
                 transforms.Flipd(keys=["image"], spatial_axis=1),  # Fix flipped image read

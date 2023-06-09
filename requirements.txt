@@ -3,7 +3,7 @@ gdown
 isort
 lpips==0.1.4
 monai-generative
-monai[matplotlib, pandas, mlflow, tqdm, pillow]>=1.2.0rc1
+monai[tifffile, imagecodecs, matplotlib, pandas, mlflow, tqdm, pillow]==1.2.0
 omegaconf==2.3.0
 pre-commit
 pynvml
