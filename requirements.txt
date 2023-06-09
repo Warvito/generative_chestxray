@@ -3,7 +3,7 @@ gdown
 isort
 lpips==0.1.4
 monai-generative
-monai-weekly[nibabel, matplotlib, pandas, mlflow, tqdm, pillow]>=1.2.0rc1
+monai[matplotlib, pandas, mlflow, tqdm, pillow]>=1.2.0rc1
 omegaconf==2.3.0
 pre-commit
 pynvml

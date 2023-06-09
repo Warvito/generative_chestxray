@@ -1,4 +1,4 @@
-""" Training script for the autoencoder with KL regulization. """
+""" Training script for the autoencoder with KL regularization. """
 import argparse
 import warnings
 from pathlib import Path
@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument("--run_dir", help="Location of model to resume.")
     parser.add_argument("--training_ids", help="Location of file with training ids.")
     parser.add_argument("--validation_ids", help="Location of file with validation ids.")
-    parser.add_argument("--config_file", help="Location of file with validation ids.")
+    parser.add_argument("--config_file", help="Location of file with model's configuration.")
     parser.add_argument("--batch_size", type=int, default=256, help="Training batch size.")
     parser.add_argument("--n_epochs", type=int, default=25, help="Number of epochs to train.")
     parser.add_argument("--adv_start", type=int, default=25, help="Epoch when the adversarial training starts.")
@@ -89,7 +89,6 @@ def main(args):
     perceptual_loss = perceptual_loss.to(device)
     discriminator = discriminator.to(device)
 
-    # Optimizers
     optimizer_g = optim.Adam(model.parameters(), lr=config["stage1"]["base_lr"])
     optimizer_d = optim.Adam(discriminator.parameters(), lr=config["stage1"]["disc_lr"])
 
@@ -108,7 +107,6 @@ def main(args):
     else:
         print(f"No checkpoint found.")
 
-    # Train model
     print(f"Starting Training")
     val_loss = train_aekl(
         model=model,
