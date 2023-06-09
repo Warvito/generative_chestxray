@@ -212,15 +212,11 @@ def get_figure(
 ):
     img_npy_0 = np.clip(a=img[0, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
     recons_npy_0 = np.clip(a=recons[0, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
-    img_npy_1 = np.clip(a=img[1, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
-    recons_npy_1 = np.clip(a=recons[1, 0, :, :].cpu().numpy(), a_min=0, a_max=1)
 
     img_row_0 = np.concatenate(
         (
             img_npy_0,
             recons_npy_0,
-            img_npy_1,
-            recons_npy_1,
         ),
         axis=1,
     )
