@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pytorch:22.06-py3
+FROM nvcr.io/nvidia/pytorch:23.04-py3
 
 ARG USER_ID
 ARG GROUP_ID
@@ -8,8 +8,3 @@ RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID $USER
 
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt
-
-COPY GenerativeModels ./GenerativeModels/
-RUN cd GenerativeModels \
-  && pip install . \
-  && cd ..
