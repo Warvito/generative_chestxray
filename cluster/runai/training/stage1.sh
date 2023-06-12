@@ -3,19 +3,19 @@ run_dir="aekl_v3"
 training_ids="/project/outputs/ids/train.tsv"
 validation_ids="/project/outputs/ids/validation.tsv"
 config_file="/project/configs/stage1/aekl_v3.yaml"
-batch_size=64
-n_epochs=75
+batch_size=16
+n_epochs=100
 adv_start=10
-eval_freq=3
-num_workers=64
+eval_freq=1
+num_workers=128
 experiment="AEKL"
 
 runai submit \
-  --name mimic-aekl-v0 \
+  --name mimic-aekl-v3 \
   --image aicregistry:5000/wds20:ldm_mimic \
   --backoff-limit 0 \
   --gpu 4 \
-  --cpu 32 \
+  --cpu 96 \
   --large-shm \
   --run-as-user \
   --node-type "A100" \
