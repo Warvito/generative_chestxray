@@ -1,11 +1,11 @@
 seed=2
-run_dir="aekl_v3_ldm_v3_t"
+run_dir="aekl_v3_ldm_v3-new"
 training_ids="/project/outputs/ids/train.tsv"
 validation_ids="/project/outputs/ids/validation.tsv"
 stage1_uri="/project/mlruns/398344666374521908/d21dfcf5ba6d424dad18994bec47af29/artifacts/final_model"
 config_file="/project/configs/ldm/ldm_v3.yaml"
 scale_factor=0.3
-batch_size=128
+batch_size=64
 n_epochs=1000
 eval_freq=10
 num_workers=256
@@ -13,10 +13,10 @@ extended_report=0
 experiment="LDM"
 
 runai submit \
-  --name  mimic-ldm-v3-t \
+  --name  mimic-ldm-v3 \
   --image aicregistry:5000/wds20:ldm_mimic \
   --backoff-limit 0 \
-  --gpu 8 \
+  --gpu 4 \
   --cpu 128 \
   --large-shm \
   --run-as-user \
