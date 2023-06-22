@@ -107,7 +107,7 @@ def main(args):
         sample = np.clip(sample.cpu().numpy(), 0, 1)
         sample = (sample * 255).astype(np.uint8)
         im = Image.fromarray(sample[0, 0])
-        im.save(output_dir / f"sample_{i}.jpg")
+        im.save(output_dir / f"sample_{i}.png")
 
 
 if __name__ == "__main__":
