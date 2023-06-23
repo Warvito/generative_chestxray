@@ -5,6 +5,7 @@ test set.
 """
 
 import argparse
+import json
 from pathlib import Path
 
 import numpy as np
@@ -65,7 +66,7 @@ def main(args):
         num_train_timesteps=config["ldm"]["scheduler"]["num_train_timesteps"],
         beta_start=config["ldm"]["scheduler"]["beta_start"],
         beta_end=config["ldm"]["scheduler"]["beta_end"],
-        beta_schedule=config["ldm"]["scheduler"]["beta_schedule"],
+        schedule="scaled_linear_beta",
         prediction_type=config["ldm"]["scheduler"]["prediction_type"],
         clip_sample=False,
     )
@@ -74,15 +75,19 @@ def main(args):
     tokenizer = CLIPTokenizer.from_pretrained("stabilityai/stable-diffusion-2-1-base", subfolder="tokenizer")
     text_encoder = CLIPTextModel.from_pretrained("stabilityai/stable-diffusion-2-1-base", subfolder="text_encoder")
 
-    # Use transform to load the test set reports.
-    # Read test ids.
     df = pd.read_csv(args.test_ids, sep="\t")
+    reports_list = []
+    for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+        with open(str(row["report"])) as json_file:
+            report_data = json.load(json_file)
+
+        reports_list.append(" ".join(report_data["sentences"]))
 
     for i in range(args.start_seed, args.stop_seed):
         set_determinism(seed=i)
 
         text_inputs = tokenizer(
-            "",
+            reports_list[i],
             padding="max_length",
             max_length=tokenizer.model_max_length,
             truncation=True,
