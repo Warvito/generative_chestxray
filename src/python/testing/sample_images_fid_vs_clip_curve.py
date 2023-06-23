@@ -86,8 +86,9 @@ def main(args):
     for i in range(args.start_seed, args.stop_seed):
         set_determinism(seed=i)
 
+        prompt = ["", reports_list[i]]
         text_inputs = tokenizer(
-            reports_list[i],
+            prompt,
             padding="max_length",
             max_length=tokenizer.model_max_length,
             truncation=True,
