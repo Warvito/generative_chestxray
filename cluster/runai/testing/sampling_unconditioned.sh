@@ -14,7 +14,7 @@ for i in {0..3}; do
   start_seed=$((i*250))
   stop_seed=$(((i+1)*250))
   runai submit \
-    --name  sampling-mimic-${start_seed}-${stop_seed} \
+    --name  mimic-sampling-${start_seed}-${stop_seed} \
     --image aicregistry:5000/wds20:ldm_mimic \
     --backoff-limit 0 \
     --gpu 1 \
