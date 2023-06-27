@@ -33,7 +33,7 @@ def main(args):
     print_config()
 
     sample_dir = Path(args.sample_dir)
-    sample_list = sorted(list(sample_dir.glob("*.jpg")))
+    sample_list = sorted(list(sample_dir.glob("*.png")))
 
     datalist = []
     for sample_path in sample_list:
