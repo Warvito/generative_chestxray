@@ -63,7 +63,7 @@ def main(args):
         num_train_timesteps=config["ldm"]["scheduler"]["num_train_timesteps"],
         beta_start=config["ldm"]["scheduler"]["beta_start"],
         beta_end=config["ldm"]["scheduler"]["beta_end"],
-        beta_schedule=config["ldm"]["scheduler"]["beta_schedule"],
+        schedule=config["ldm"]["scheduler"]["schedule"],
         prediction_type=config["ldm"]["scheduler"]["prediction_type"],
         clip_sample=False,
     )
