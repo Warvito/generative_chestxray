@@ -1,7 +1,6 @@
-output_dir="/project/outputs/metrics/v0.3/guidance_scale_1.0/"
-
 counter=0
 for guidance_scale in 1.0 1.5 1.75 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 ; do
+    output_dir="/project/outputs/metrics/v0.3/guidance_scale_${guidance_scale}/"
     samples_dir="/project/outputs/samples_fid_v03/guidance_scale_${guidance_scale}"
     runai submit \
       --name  mimic-clip-score-${counter}  \

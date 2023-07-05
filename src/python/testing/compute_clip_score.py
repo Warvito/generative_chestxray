@@ -52,21 +52,21 @@ def main(args):
 
         prompt = ""
         if i < 125:
-            prompt = "atelectasis"
+            prompt = "atelectasis chest x-ray"
         elif i >= 125 and i < 250:
-            prompt = "cardiomegaly"
+            prompt = "cardiomegaly chest x-ray"
         elif i >= 250 and i < 375:
-            prompt = "consolidation"
+            prompt = "normal chest x-ray"
         elif i >= 375 and i < 500:
-            prompt = "edema"
+            prompt = "edema chest x-ray"
         elif i >= 500 and i < 625:
-            prompt = "enlarged cardiomediastinum"
+            prompt = "enlarged cardiomediastinum chest x-ray"
         elif i >= 625 and i < 750:
-            prompt = "pleural effusion"
+            prompt = "pleural effusion chest x-ray"
         elif i >= 750 and i < 875:
-            prompt = "pneumonia"
+            prompt = "pneumonia chest x-ray"
         elif i >= 875:
-            prompt = "pneumothorax"
+            prompt = "pneumothorax chest x-ray"
 
         texts = tokenizer([prompt], context_length=context_length).to(device)
         with torch.no_grad():
